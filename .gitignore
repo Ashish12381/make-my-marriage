@@ -1,0 +1,27 @@
+# Dependencies and generated output
+node_modules/
+.next/
+dist/
+build/
+out/
+coverage/
+tmp/
+.cache/
+*.tsbuildinfo
+apps/web/next-env.d.ts
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+.aws/
+*.pem
+*.key
+
+# Local tooling and deployment state
+.vercel/
+.npm-cache/
+*.log
+.DS_Store
+Thumbs.db
+.scaffold-verification/

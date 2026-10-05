@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+
+:root {
+  --brand-primary: #c65d32;
+  --brand-primary-hover: #a94728;
+  --brand-oat-milk: #f8f3ea;
+  --brand-warm-cream: #fffdfc;
+  --brand-sand: #efe5d7;
+  --brand-warm-taupe: #ddd1c5;
+  --brand-muted: #6e625b;
+  --brand-sage: #6e846b;
+  --brand-amber: #d9983d;
+  --brand-brick: #b94a45;
+  --brand-font-heading: 'Manrope Variable', sans-serif;
+  --brand-font-body: 'Inter Variable', sans-serif;
+}
+
+@theme inline {
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-primary-hover);
+  --color-oat-milk: var(--brand-oat-milk);
+  --color-warm-cream: var(--brand-warm-cream);
+  --color-sand: var(--brand-sand);
+  --color-warm-taupe: var(--brand-warm-taupe);
+  --color-muted: var(--brand-muted);
+  --color-sage: var(--brand-sage);
+  --color-amber: var(--brand-amber);
+  --color-brick: var(--brand-brick);
+  --font-heading: var(--brand-font-heading);
+  --font-body: var(--brand-font-body);
+  --font-sans: var(--brand-font-body);
+}
+
+@layer base {
+  body {
+    background: var(--brand-warm-cream);
+    font-family: var(--brand-font-body);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--brand-font-heading);
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+}

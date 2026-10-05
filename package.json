@@ -1,0 +1,37 @@
+{
+  "name": "make-my-marriage",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Make My Marriage V1 modular monolith workspace",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.19.0 <21",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "dev": "npm run build:contracts && concurrently --kill-others --names web,api,contracts \"npm run dev --workspace=@make-my-marriage/web\" \"npm run dev --workspace=@make-my-marriage/api\" \"npm run dev --workspace=@make-my-marriage/contracts\"",
+    "dev:web": "npm run build:contracts && npm run dev --workspace=@make-my-marriage/web",
+    "dev:api": "npm run build:contracts && npm run dev --workspace=@make-my-marriage/api",
+    "build:contracts": "npm run build --workspace=@make-my-marriage/contracts",
+    "build": "npm run build:contracts && npm run build --workspace=@make-my-marriage/api && npm run build --workspace=@make-my-marriage/web",
+    "lint": "eslint eslint.config.mjs && npm run lint --workspaces --if-present",
+    "typecheck": "npm run build:contracts && npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspace=@make-my-marriage/api",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^20.19.43",
+    "concurrently": "^9.2.4",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.9.9",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.71.0"
+  }
+}

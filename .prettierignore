@@ -1,0 +1,12 @@
+node_modules/
+.next/
+dist/
+out/
+coverage/
+package-lock.json
+*.tsbuildinfo
+apps/web/next-env.d.ts
+# Preserve the existing product documents exactly.
+docs/
+.npm-cache/
+.scaffold-verification/
