@@ -10,7 +10,11 @@
   --brand-muted: #6e625b;
   --brand-sage: #6e846b;
   --brand-amber: #d9983d;
+  --brand-amber-ink: #80521f;
   --brand-brick: #b94a45;
+  --brand-espresso: #29211d;
+  --brand-peach-clay: #e7a27f;
+  --brand-surface-low: #f4ece1;
   --brand-font-heading: 'Manrope Variable', sans-serif;
   --brand-font-body: 'Inter Variable', sans-serif;
 }
@@ -26,9 +30,151 @@
   --color-sage: var(--brand-sage);
   --color-amber: var(--brand-amber);
   --color-brick: var(--brand-brick);
+  --color-espresso: var(--brand-espresso);
+  --color-peach-clay: var(--brand-peach-clay);
+  --color-background: var(--brand-oat-milk);
+  --color-surface: var(--brand-warm-cream);
+  --color-surface-container-low: var(--brand-surface-low);
+  --color-sand-alt: var(--brand-sand);
+  --color-on-surface: var(--brand-espresso);
+  --color-secondary: var(--brand-muted);
+  --color-outline: var(--brand-warm-taupe);
+  --color-amber-warm: var(--brand-amber);
+  --color-amber-ink: var(--brand-amber-ink);
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-space-md: 1rem;
+  --spacing-space-lg: 1.5rem;
+  --spacing-space-xl: 2.5rem;
+  --spacing-margin-mobile: 1rem;
+  --spacing-margin: 2.5rem;
+  --font-display: var(--brand-font-heading);
+  --font-display-mobile: var(--brand-font-heading);
+  --font-headline-lg: var(--brand-font-heading);
+  --font-headline-md: var(--brand-font-heading);
+  --font-headline-sm: var(--brand-font-heading);
+  --font-body-lg: var(--brand-font-body);
+  --font-body-md: var(--brand-font-body);
+  --font-body-sm: var(--brand-font-body);
+  --font-label-lg: var(--brand-font-body);
+  --font-label-md: var(--brand-font-body);
+  --font-label-sm: var(--brand-font-body);
+  --text-display: 3.5rem;
+  --text-display--line-height: 1.21;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 700;
+  --text-display-mobile: 2.25rem;
+  --text-display-mobile--line-height: 1.22;
+  --text-display-mobile--letter-spacing: -0.02em;
+  --text-display-mobile--font-weight: 700;
+  --text-headline-lg: 2.5rem;
+  --text-headline-lg--line-height: 1.2;
+  --text-headline-md: 1.75rem;
+  --text-headline-md--line-height: 1.29;
+  --text-headline-sm: 1.25rem;
+  --text-headline-sm--line-height: 1.4;
+  --text-body-lg: 1.125rem;
+  --text-body-lg--line-height: 1.56;
+  --text-body-md: 1rem;
+  --text-body-md--line-height: 1.5;
+  --text-body-sm: 0.875rem;
+  --text-body-sm--line-height: 1.43;
+  --text-label-lg: 0.875rem;
+  --text-label-lg--line-height: 1.43;
+  --text-label-md: 0.75rem;
+  --text-label-md--line-height: 1.33;
+  --text-label-sm: 0.6875rem;
+  --text-label-sm--line-height: 1.27;
   --font-heading: var(--brand-font-heading);
   --font-body: var(--brand-font-body);
   --font-sans: var(--brand-font-body);
+}
+
+/* Landing-page rules preserve the Stitch direction without altering app screens. */
+.landing-page {
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.75rem;
+  overflow-wrap: break-word;
+}
+
+.landing-page section {
+  scroll-margin-top: 6rem;
+}
+
+.landing-page a:focus-visible,
+.landing-page button:focus-visible,
+.landing-page summary:focus-visible {
+  outline: 3px solid var(--brand-primary-hover);
+  outline-offset: 4px;
+}
+
+.landing-page a.bg-primary {
+  background-color: var(--brand-primary-hover);
+}
+
+.landing-page .text-primary {
+  color: var(--brand-primary-hover);
+}
+
+.landing-icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  vertical-align: -0.15em;
+}
+
+.landing-skip-link {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 60;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--brand-warm-cream);
+  color: var(--brand-espresso);
+  transform: translateY(-200%);
+}
+
+.landing-skip-link:focus {
+  transform: translateY(0);
+}
+
+@media (max-width: 767px) {
+  .landing-page .text-display {
+    font-size: 2.25rem;
+    line-height: 1.22;
+  }
+
+  .landing-page .text-headline-lg {
+    font-size: 1.875rem;
+  }
+
+  .landing-page .text-headline-md {
+    font-size: 1.5rem;
+  }
+
+  .landing-page .justify-between {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.landing-page) {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page *,
+  .landing-page *::before,
+  .landing-page *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 @layer base {

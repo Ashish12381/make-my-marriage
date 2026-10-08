@@ -1,6 +1,6 @@
 # Make My Marriage
 
-V1 foundation for a collaborative wedding planning application. This repository currently contains a project scaffold: working web routes, an Express health endpoint, shared-package configuration, and development tooling. Product features and the approved page designs will be implemented incrementally from the documents in [`docs/`](docs/).
+V1 foundation for a collaborative wedding planning application. This repository contains the approved Stitch public homepage, scaffold routes, an Express health endpoint, shared-package configuration, and development tooling. Product features are implemented incrementally from the documents in [`docs/`](docs/).
 
 ## Architecture
 
@@ -90,7 +90,7 @@ This first builds contracts, then runs the web, API, and contracts compiler watc
 | API         | <http://localhost:4000>               |
 | Health      | <http://localhost:4000/api/v1/health> |
 
-Only the health endpoint implements API behavior in this phase. Business routes and authentication remain placeholders. Web pages contain minimal route placeholders; approved landing, authentication, and dashboard designs are deferred.
+Only the health endpoint implements API behavior in this phase. The public homepage uses the approved Stitch design with responsive navigation and clearly labeled illustrative previews. Its planning and sign-in links lead to existing placeholder routes. Authentication, dashboard screens, and backend product behavior remain deferred.
 
 The browser API client includes credentials for future HTTP-only session cookies. It has no JWT handling and does not store authentication tokens in browser storage. Authentication and wedding-access middleware are unmounted placeholders that fail closed if invoked; they do not provide working authorization yet.
 
