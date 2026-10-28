@@ -1,8 +1,10 @@
 # Make My Marriage — Project Status
 
-**Last updated:** 2026-10-08  
-**Repository snapshot:** `16e49fd` — `feat(web): add public wedding planning homepage`  
-**Current stage:** V1 foundation and public homepage complete; core product development pending.
+**Last updated:** 2026-10-16
+
+**Homepage baseline (auth changes are currently uncommitted):** `16e49fd` — `feat(web): add public wedding planning homepage`
+
+**Current stage:** Public homepage plus Atlas-backed signup/login/session/logout implemented; wedding setup and the remaining business workflows are pending.
 
 This document is a development handoff for recovering context. It records implemented behavior, remaining PRD work, verification, and the recommended next milestone. It does not replace the requirements or define new scope. The user reported pushing the latest code to GitHub; this snapshot was checked against the local repository, not remote CI or deployment.
 
@@ -24,12 +26,12 @@ This document is a development handoff for recovering context. It records implem
 - API liveness endpoint: `GET /api/v1/health` returns `{ "status": "ok" }`.
 - Helmet, credential-aware frontend CORS, JSON body limits, cookie parsing, request validation infrastructure, not-found handling, and sanitized error handling.
 - Zod environment validation and optional MongoDB connection at startup. The scaffold can run without a configured database.
-- Backend module locations, empty routers, model-directory placeholders, and public-interface locations. These are structure only; business routers are unmounted.
-- Authentication and wedding-access middleware placeholders fail closed if invoked; they do not authenticate or authorize users.
+- Backend module structure remains in place. Auth routes are mounted; other business routers remain unmounted.
+- Session authentication validates hashed tokens, expiry, revocation, and active users. Wedding membership authorization remains a fail-closed placeholder.
 - R2, Resend, and Google Places configuration-validation foundations; no provider operations.
 - Browser API client configured to include credentials. No browser token storage or JWT authentication.
 - Formatting, lint, typecheck, tests, build scripts, and CI configuration.
-- Shared contracts entry point exists but intentionally contains no product contracts yet.
+- Shared contracts contain Zod signup/login validators, public auth DTOs, and response schemas consumed by both applications.
 
 ### Public homepage
 
@@ -47,15 +49,15 @@ Implemented sections: hero/dashboard preview, feature overview, family collabora
 - Gallery copy reflects technical upload verification and album visibility, without promising an approval workflow. Livestream copy describes opening a supplied YouTube link.
 - Homepage metadata and local SVG icons. The ceremony preview image currently uses the external Google-hosted asset from the Stitch export.
 
-**Boundary:** Sample task lists, payments, RSVP selections, vendor cards, website, and stream panels are marketing demonstrations. They do not read or write product data, call providers, submit RSVP, edit tasks, shortlist vendors, or play a real stream. Signup and login links work as navigation, but their destination pages are placeholders.
+**Boundary:** Sample task lists, payments, RSVP selections, vendor cards, website, and stream panels are marketing demonstrations. They do not read or write product data, call providers, submit RSVP, edit tasks, shortlist vendors, or play a real stream. Signup and login links now lead to implemented auth forms.
 
 ## Status against the PRD
 
-The public marketing homepage is complete for the current milestone. It demonstrates the following modules but does not complete their functional requirements.
+The public marketing homepage and signup/login milestone are implemented. Marketing samples do not complete the corresponding business modules.
 
 | PRD area | Current status | Remaining implementation |
 | --- | --- | --- |
-| 6.1 / FR-01 — Authentication & Wedding Setup | Scaffold only | Signup/login/logout/reset, profiles, opaque sessions, wedding creation/editing, onboarding, and wedding switching |
+| 6.1 / FR-01 — Authentication & Wedding Setup | Signup/login/current profile/logout implemented | Password reset, profile editing, wedding setup/onboarding, and wedding switching remain pending |
 | 6.2 / FR-02 — Family & Organizer Management | Scaffold plus homepage demonstration | Member invitations/acceptance, roles, permissions, responsibilities, last-admin protection, and activity records |
 | 6.3 / FR-03 — Multiple Wedding Events | Scaffold only | Event CRUD, organizers, related records, default albums, and published event updates |
 | 6.4 / FR-04 — Wedding Dashboard | Route placeholder; homepage sample dashboard | Authorized aggregates, family RSVP summaries, expense totals, tasks, activity, and quick actions |
@@ -70,7 +72,7 @@ The public marketing homepage is complete for the current milestone. It demonstr
 | 6.13 / FR-13 — Platform Admin | Backend module structure only | Protected admin UI, operational capabilities, strengthened access, and audited intervention |
 | PRD non-functional and release acceptance requirements | Foundation checks only | End-to-end security, tenant isolation, provider behavior, accessibility/performance, operational readiness, and release scenarios |
 
-No concrete MongoDB business schemas, repositories, business services, persistence workflows, guest website routes, or functioning platform-admin screen have been implemented. An existing route returning HTTP 200 does not mean its feature is complete.
+Concrete users/sessions schemas, auth repositories/services, and audit-backed throttling are implemented. Other business schemas/workflows, guest website routes, and platform administration remain pending. An existing route returning HTTP 200 does not mean its feature is complete.
 
 ## Decisions to preserve
 
@@ -84,41 +86,47 @@ Use the complete rules in AGENTS.md and the design documents. Particularly:
 - Record money in integer paise and actual payments separately. No budgets, caps, payment processing, or duplicated wedding-wide costs.
 - Store compressed images/thumbnails in R2 and metadata in MongoDB. No retained originals or photo approval workflow. `INVITED_GUESTS` means an actively invited family for the wedding.
 - Use Google Places for discovery, Resend for bounded email batches, and Vercel Cron for daily RSVP reminders. YouTube hosts video; the app stores and opens event links.
-- Preserve approved designs. No approved authentication/dashboard design reference has been added to the repository at this snapshot.
+- Preserve approved designs. Auth screens were read directly from Stitch (project `9065562061050388454`); see AUTH_SETUP.md for screen references. Other approved screen exports are not stored in the repository.
+
+## Signup/login milestone — 2026-10-16
+
+- Responsive Stitch-based `/signup` and `/login` forms, shared validation, password visibility, confirm-password validation, loading/error feedback, and a 30-day Remember Me option.
+- Atlas-backed user registration without auto-login; session creation occurs only on explicit login; bcrypt cost 12; normalized email uniqueness; safe public profile responses.
+- Opaque 256-bit session tokens with SHA-256 hashes in MongoDB; host-only HttpOnly/SameSite=Lax cookies, Secure in production. Standard sessions expire after seven days by default; remembered sessions after 30 days. Expiry/revocation are checked in code as well as TTL cleanup.
+- Signed double-submit CSRF plus exact Origin checks; redacted attempt records in the existing `audit_logs` collection provide shared throttling. No new collection or queue was introduced.
+- Per the product owner’s 2026-10-16 revision, signup now redirects to login with an account-created notice, without issuing a session. This supersedes the original automatic-login signup contract in API_Design.md; see AUTH_SETUP.md.
+- Per the product owner’s additional revision, successful login and existing-session visits to auth pages redirect to the homepage (`/`). Signup still redirects to login. `/account` is no longer the post-login destination; it remains an optional page that resolves the real session and offers working sign-out. It explicitly explains that wedding setup is the next feature; it is not a completed dashboard.
+- Homepage desktop/mobile navigation, footer and closing section now show Sign Out for validated sessions. Auth pages check sessions before rendering, eliminating the brief login form flash. Login/logout refresh the homepage after cookies change. Server-rendered session navigation requires a shared cookie hostname or a same-origin API proxy before deployment; see AUTH_SETUP.md.
+- Signed-in hero navigation now says Your Account and opens `/account` directly, avoiding the signup/home loop. Account pages validate sessions on the server and recheck active tabs after session-change hints or focus/visibility/history restoration. Invalid sessions clear the profile and navigate to login; no tokens or authentication state are stored in browser storage. Wedding onboarding remains pending.
+- No email verification is required. Password reset is not yet implemented; the Forgot Password destination explains that limitation rather than pretending to send an email.
+- Unapproved legal/support links and the design's required terms checkbox were not shipped without approved policy content. The post-auth screen does not repeat the Stitch transition's out-of-scope budget wording or offer a dead setup action.
+- Live credentials were removed from the modified tracked `.env.example`; working credentials remain in ignored `.env`. A random AUTH_SECRET was generated locally without printing it.
 
 ## Recommended next milestone
 
-**Recommendation, not a recorded user approval:** implement authentication and initial wedding setup before building data-backed dashboards or additional business features.
-
-1. Align the API response envelope, validation, and errors with the API Design; implement the approved auth UI and users/sessions schemas.
-2. Implement signup/login/logout with password hashing, session expiry/revocation, cookie protections, and the required request security controls. Build password reset with the approved email integration when authorized.
-3. Implement wedding creation and the initial admin membership together, enforcing tenant isolation from the start.
-4. Verify the first usable journey: register, sign in, create a wedding, access its authorized workspace, sign out, and reject unauthorized access.
-5. Continue with memberships/permissions, events/tasks, family invitations/RSVP, expense records, email/reminders, vendors, gallery, wedding website/YouTube links, and platform operations according to the technical dependencies.
-
-The next session should confirm the desired feature and approved UI reference before starting it. The homepage does not require further redesign to proceed.
+Implement wedding setup and initial Wedding Admin membership atomically, followed by memberships/permissions and events/tasks. Password recovery needs its approved token-persistence design and Resend configuration; the current user/session schemas do not silently invent password-reset fields or a nineteenth collection. Profile editing and the full session-management API are also pending. See [AUTH_SETUP.md](AUTH_SETUP.md).
 
 ## Verification and local development
 
-Last application verification: **2026-10-08**, after the interactive event preview implementation.
+Last application verification: **2026-10-16**, after signup/login implementation. Final checks are recorded below.
 
 | Check | Result and scope |
 | --- | --- |
 | `npm run lint` | Passed |
 | `npm run typecheck` | Passed |
-| `npm run test` | Passed: 5 API tests across 2 files; health and error handling only |
+| `npm run test` | Passed: 19 offline API tests, 26 frontend session/navigation tests and 1 opt-in Atlas lifecycle test (46 total). Default runs skip the Atlas test. Live HTTP checks verified signed-in account navigation, account access/redirects before and after revocation, and auth redirects without form rendering |
 | `npm run build` | Passed for contracts, API, and web |
 | `npm run format:check` | Passed |
-| Browser checks | Homepage at desktop/tablet/mobile widths; no horizontal overflow at checked widths; navigation, menu, signup/login destinations, image loading, all five event selectors, and keyboard activation verified |
+| Browser checks | Homepage checks passed on 2026-10-08. Auth visual/browser interaction inspection was blocked on 2026-10-16 because Computer Use could not establish the active URL confidently; do not claim auth browser QA passed |
 
-These checks do not validate unimplemented PRD workflows. Homepage interaction checks were manual browser checks; there is no automated frontend interaction suite yet. GitHub CI results and production deployment were not verified in this milestone.
+These checks do not validate unimplemented PRD workflows. Atlas testing verified actual bcrypt storage, sessions, duplicate signup races, case-insensitive login, expiry, revocation, and account suspension. The synthetic account/session/attempt records were removed afterward. Frontend regression tests cover server session resolution, rendered auth navigation and auth-page redirects; browser click/visual coverage remains pending. GitHub CI results and production deployment were not verified in this milestone.
 
 From the repository root, run `npm run dev`. Web: `http://localhost:3000`; API: `http://localhost:4000`; health: `http://localhost:4000/api/v1/health`. See [README.md](../README.md) for prerequisites and environment setup. Do not overwrite existing local environment files or copy secrets into this document.
 
 ## Known limitations and follow-ups
 
-- Core workflows, database persistence, provider calls, and production deployment remain pending. MongoDB was disabled during the recorded local verification because its URI was not configured.
-- The scaffold health response and error envelopes are not yet the full API Design envelope; align them before implementing business APIs.
+- Atlas is configured locally and the auth persistence lifecycle passed against `make_my_marriage_dev`. Other core workflows, provider operations, and deployment remain pending.
+- Auth responses and API errors now include the designed success/error envelope and request ID. Health retains its existing `{ status: "ok" }` liveness payload.
 - Next.js on this Windows workspace encountered generated-cache/compiler failures during verification. A clean build with the dev server stopped passed. Avoid running builds against the same generated output concurrently; clear only the verified generated `.next` directory when recovery is needed.
 - The ceremony preview depends on an external Stitch image URL. Review asset availability and hosting before production release.
 - Legal/contact pages and links were not invented to populate the footer. Add them when their content and scope are approved.
@@ -132,6 +140,7 @@ From the repository root, run `npm run dev`. Web: `http://localhost:3000`; API: 
 | Approved public homepage | Complete; user reviewed and accepted for now |
 | Interactive homepage event examples | Complete; five event selectors and sample task panels verified |
 | Project status handoff | Created on 2026-10-08 |
-| Core authentication and wedding workflow | Pending |
+| Signup/login/session/logout | Implemented and tested against Atlas on 2026-10-16; browser visual QA pending |
+| Wedding setup and membership workflow | Pending |
 
 After each milestone, update the date and repository reference, revise the PRD status rows, record checks actually run, add any unresolved decisions, and adjust the next milestone. Mark a PRD feature complete only when its real behavior and authorization are implemented and verified; UI previews and scaffold files are insufficient.

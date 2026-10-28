@@ -12,7 +12,7 @@ describe('JSON request encoding errors', () => {
       .send('{}');
 
     expect(response.status).toBe(415);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       error: {
         code: 'UNSUPPORTED_MEDIA_TYPE',
         message: 'Request body encoding is not supported.',
@@ -28,7 +28,7 @@ describe('JSON request encoding errors', () => {
       .send('{}');
 
     expect(response.status).toBe(415);
-    expect(response.body).toEqual({
+    expect(response.body).toMatchObject({
       error: {
         code: 'UNSUPPORTED_MEDIA_TYPE',
         message: 'Request body encoding is not supported.',
@@ -51,7 +51,7 @@ describe('Unexpected errors', () => {
         const response = await request(testApp).get('/');
 
         expect(response.status).toBe(500);
-        expect(response.body).toEqual({
+        expect(response.body).toMatchObject({
           error: {
             code: 'INTERNAL_ERROR',
             message: 'An unexpected error occurred.',

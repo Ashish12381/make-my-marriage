@@ -1,8 +1,9 @@
 import type { RequestHandler } from 'express';
-import { AppError } from '../errors/app-error.js';
+import { authService } from '../../modules/auth/auth.service.js';
+import { readCookie, SESSION_COOKIE } from '../../modules/auth/auth.security.js';
 
-// Structural placeholder: never accept a cookie as proof of an authenticated user.
-// Implement opaque token hashing, database expiry/revocation, and CSRF before mounting.
-export const authSession: RequestHandler = (_request, _response, next) => {
-  next(new AppError(501, 'AUTH_NOT_IMPLEMENTED', 'Session authentication is not implemented.'));
+// Wedding membership and feature permissions remain a separate authorization step.
+export const authSession: RequestHandler = async (request, response, next) => {
+  response.locals.user = await authService.authenticate(readCookie(request, SESSION_COOKIE));
+  next();
 };

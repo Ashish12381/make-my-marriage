@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { LandingIcon } from './landing-icon';
+import { SignOutButton } from '../auth/sign-out-button';
 
-export function ClosingSection() {
+export function ClosingSection({ signedIn }: { signedIn: boolean }) {
   return (
     <section className="w-full py-space-xl lg:py-32" id="start-planning">
       <div className="mx-auto max-w-[1440px] px-margin-mobile lg:px-margin">
@@ -21,19 +22,25 @@ export function ClosingSection() {
               }
             </p>
             <div className="mt-space-lg flex flex-wrap items-center justify-center gap-space-md">
-              <Link
-                className="inline-flex h-12 items-center justify-center gap-space-xs rounded-xl bg-primary px-space-lg font-label-lg text-label-lg font-semibold text-warm-cream shadow-lg shadow-primary/25 transition-all hover:bg-primary-hover"
-                href="/signup"
-              >
-                <span>{'Start Planning Your Wedding'}</span>
-                <LandingIcon name="arrow_forward" className="text-[20px]" />
-              </Link>
-              <Link
-                className="inline-flex h-12 items-center justify-center rounded-xl bg-transparent border border-warm-taupe/40 px-space-lg font-label-lg text-label-lg font-semibold text-oat-milk hover:bg-warm-cream/10 transition-colors"
-                href="/login"
-              >
-                {'\n              Sign In\n            '}
-              </Link>
+              {signedIn ? (
+                <SignOutButton className="inline-flex min-h-12 items-center justify-center rounded-xl border border-warm-taupe/40 px-space-lg font-semibold text-oat-milk hover:bg-warm-cream/10" />
+              ) : (
+                <>
+                  <Link
+                    className="inline-flex h-12 items-center justify-center gap-space-xs rounded-xl bg-primary px-space-lg font-label-lg text-label-lg font-semibold text-warm-cream shadow-lg shadow-primary/25 transition-all hover:bg-primary-hover"
+                    href="/signup"
+                  >
+                    <span>{'Start Planning Your Wedding'}</span>
+                    <LandingIcon name="arrow_forward" className="text-[20px]" />
+                  </Link>
+                  <Link
+                    className="inline-flex h-12 items-center justify-center rounded-xl bg-transparent border border-warm-taupe/40 px-space-lg font-label-lg text-label-lg font-semibold text-oat-milk hover:bg-warm-cream/10 transition-colors"
+                    href="/login"
+                  >
+                    {'\n              Sign In\n            '}
+                  </Link>
+                </>
+              )}
             </div>
             <div className="mt-space-md flex flex-wrap items-center justify-center gap-space-md text-warm-taupe/90 font-label-sm text-label-sm">
               <span>{'✓ One place for your entire wedding'}</span>

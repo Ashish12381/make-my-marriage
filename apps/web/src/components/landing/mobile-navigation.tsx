@@ -2,11 +2,14 @@
 
 import Link from 'next/link';
 import { useRef } from 'react';
+import { SignOutButton } from '../auth/sign-out-button';
 
 export function MobileNavigation({
   navigation,
+  signedIn,
 }: {
   navigation: readonly { label: string; href: string }[];
+  signedIn: boolean;
 }) {
   const menuRef = useRef<HTMLDetailsElement>(null);
   const closeMenu = () => menuRef.current?.removeAttribute('open');
@@ -43,20 +46,26 @@ export function MobileNavigation({
             {item.label}
           </a>
         ))}
-        <Link
-          href="/login"
-          onClick={closeMenu}
-          className="rounded-lg px-3 py-3 text-sm font-semibold hover:bg-sand"
-        >
-          Sign In
-        </Link>
-        <Link
-          href="/signup"
-          onClick={closeMenu}
-          className="rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-white hover:bg-primary-hover"
-        >
-          Start Planning
-        </Link>
+        {signedIn ? (
+          <SignOutButton className="rounded-lg px-3 py-3 text-sm font-semibold hover:bg-sand" />
+        ) : (
+          <>
+            <Link
+              href="/login"
+              onClick={closeMenu}
+              className="rounded-lg px-3 py-3 text-sm font-semibold hover:bg-sand"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/signup"
+              onClick={closeMenu}
+              className="rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-white hover:bg-primary-hover"
+            >
+              Start Planning
+            </Link>
+          </>
+        )}
       </nav>
     </details>
   );

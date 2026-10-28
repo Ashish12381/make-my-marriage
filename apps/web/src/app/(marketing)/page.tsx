@@ -11,6 +11,7 @@ import { VendorsSection } from '@/components/landing/vendors-section';
 import { LivestreamSection } from '@/components/landing/livestream-section';
 import { HowItWorksSection } from '@/components/landing/how-it-works-section';
 import { ClosingSection } from '@/components/landing/closing-section';
+import { getServerUser } from '@/lib/auth/server-session';
 
 export const metadata: Metadata = {
   title: 'Make My Marriage | One wedding. Both families.',
@@ -18,15 +19,16 @@ export const metadata: Metadata = {
     'Plan your Indian wedding together: events, tasks, family invitations, expenses, photos, and a personalized wedding website.',
 };
 
-export default function HomePage() {
+export default async function HomePage() {
+  const signedIn = Boolean(await getServerUser());
   return (
     <div className="landing-page bg-oat-milk text-espresso antialiased">
       <a className="landing-skip-link" href="#main-content">
         Skip to content
       </a>
-      <LandingHeader />
+      <LandingHeader signedIn={signedIn} />
       <main id="main-content" className="pt-20">
-        <HeroSection />
+        <HeroSection signedIn={signedIn} />
         <FeaturesSection />
         <CollaborationSection />
         <ExpensesSection />
@@ -36,9 +38,9 @@ export default function HomePage() {
         <VendorsSection />
         <LivestreamSection />
         <HowItWorksSection />
-        <ClosingSection />
+        <ClosingSection signedIn={signedIn} />
       </main>
-      <LandingFooter />
+      <LandingFooter signedIn={signedIn} />
     </div>
   );
 }

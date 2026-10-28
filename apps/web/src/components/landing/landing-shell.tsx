@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MobileNavigation } from './mobile-navigation';
+import { SignOutButton } from '../auth/sign-out-button';
 
 const navigation = [
   { label: 'Features', href: '#features' },
@@ -25,7 +26,7 @@ function Brand() {
   );
 }
 
-export function LandingHeader() {
+export function LandingHeader({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-warm-taupe/70 bg-oat-milk/95 backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-3 px-4 lg:px-10">
@@ -41,26 +42,32 @@ export function LandingHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-3 sm:gap-4">
-          <Link
-            href="/login"
-            className="hidden rounded-lg px-2 py-3 text-sm font-semibold text-muted hover:text-espresso sm:inline-flex"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/signup"
-            className="hidden rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover sm:inline-flex"
-          >
-            Start Planning
-          </Link>
-          <MobileNavigation navigation={navigation} />
+          {signedIn ? (
+            <SignOutButton className="hidden rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-hover sm:block" />
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="hidden rounded-lg px-2 py-3 text-sm font-semibold text-muted hover:text-espresso sm:inline-flex"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className="hidden rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-hover sm:inline-flex"
+              >
+                Start Planning
+              </Link>
+            </>
+          )}
+          <MobileNavigation navigation={navigation} signedIn={signedIn} />
         </div>
       </div>
     </header>
   );
 }
 
-export function LandingFooter() {
+export function LandingFooter({ signedIn }: { signedIn: boolean }) {
   return (
     <footer className="bg-espresso text-oat-milk">
       <div className="mx-auto max-w-[1440px] px-4 py-10 lg:px-10">
@@ -81,8 +88,14 @@ export function LandingFooter() {
             </span>
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
-            <Link href="/login">Sign In</Link>
-            <Link href="/signup">Start Planning</Link>
+            {signedIn ? (
+              <SignOutButton />
+            ) : (
+              <>
+                <Link href="/login">Sign In</Link>
+                <Link href="/signup">Start Planning</Link>
+              </>
+            )}
           </nav>
         </div>
         <div className="mt-10 flex flex-col justify-between gap-3 border-t border-warm-taupe/20 pt-6 text-xs text-warm-taupe sm:flex-row">

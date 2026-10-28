@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { LandingIcon } from './landing-icon';
 
-export function HeroSection() {
+export function HeroSection({ signedIn }: { signedIn: boolean }) {
   return (
     <section
       className="relative w-full overflow-hidden pb-space-xl pt-space-md lg:pb-32 lg:pt-space-lg"
@@ -32,9 +32,9 @@ export function HeroSection() {
           <div className="mt-space-lg flex flex-wrap items-center justify-center gap-space-md">
             <Link
               className="inline-flex h-12 items-center justify-center gap-space-xs rounded-xl bg-primary px-space-lg font-label-lg text-label-lg font-semibold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary-hover hover:shadow-lg"
-              href="/signup"
+              href={signedIn ? '/account' : '/signup'}
             >
-              <span>{'Start Planning'}</span>
+              <span>{signedIn ? 'Your Account' : 'Start Planning'}</span>
               <LandingIcon name="arrow_forward" className="text-[20px]" />
             </Link>
             <Link

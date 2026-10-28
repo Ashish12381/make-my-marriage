@@ -90,9 +90,9 @@ This first builds contracts, then runs the web, API, and contracts compiler watc
 | API         | <http://localhost:4000>               |
 | Health      | <http://localhost:4000/api/v1/health> |
 
-Only the health endpoint implements API behavior in this phase. The public homepage uses the approved Stitch design with responsive navigation and clearly labeled illustrative previews. Its planning and sign-in links lead to existing placeholder routes. Authentication, dashboard screens, and backend product behavior remain deferred.
+The API implements health, signup, login, current-session lookup, CSRF initialization, and logout. The public homepage uses the approved Stitch design with responsive navigation and clearly labeled illustrative previews. Its planning and sign-in links lead to working signup/login forms. Signup redirects to login with a success notice. Successful login redirects to the homepage (`/`). The optional `/account` page still resolves the current profile and supports sign-out. Wedding setup and dashboard features remain deferred.
 
-The browser API client includes credentials for future HTTP-only session cookies. It has no JWT handling and does not store authentication tokens in browser storage. Authentication and wedding-access middleware are unmounted placeholders that fail closed if invoked; they do not provide working authorization yet.
+The browser API client includes credentials for future HTTP-only session cookies. It has no JWT handling and does not store authentication tokens in browser storage. Session authentication now validates hashed tokens, expiry, revocation, and active account status. Wedding-access middleware remains a fail-closed placeholder until membership authorization is implemented.
 
 ## Commands
 
@@ -118,6 +118,10 @@ Read [`AGENTS.md`](AGENTS.md) before changing domain behavior. Approved source d
 
 Wedding is the tenant boundary. Future persistence must enforce `weddingId` and same-wedding references. The V1 uses revocable opaque sessions, family-level guest groups, event-specific family RSVP, integer paise for money, and R2 for compressed images and thumbnails. Shared contracts must stay independent of Mongoose, Express, and Next.js.
 
-Authentication, concrete MongoDB schemas, CRUD, RSVP, provider integrations, media flows, wedding websites, reminders, and platform administration are deliberately deferred. Model locations and integration foundations do not imply these features work. Do not add fake product logic to fill placeholders.
+Users, sessions, and redacted authentication-attempt audit records have concrete schemas. Wedding CRUD, membership authorization, password reset/email delivery, RSVP, provider integrations, media flows, wedding websites, reminders, and platform administration remain deferred. Model locations and integration foundations do not imply these features work. Do not add fake product logic to fill placeholders.
 
 `apps/web` and `apps/api` are intended to become separate Vercel projects. Deployment configuration and Vercel Cron setup are deferred; this phase does not deploy either application or connect real services.
+
+## Authentication development
+
+See [`docs/AUTH_SETUP.md`](docs/AUTH_SETUP.md) for Atlas configuration, session/CSRF behavior, live test instructions, and current boundaries. `MONGODB_URI` and a random `AUTH_SECRET` of at least 32 characters belong in ignored `apps/api/.env`. Auth routes return a safe 503 if configuration is absent; the health endpoint remains available.
