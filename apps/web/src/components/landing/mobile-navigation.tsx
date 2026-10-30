@@ -47,7 +47,16 @@ export function MobileNavigation({
           </a>
         ))}
         {signedIn ? (
-          <SignOutButton className="rounded-lg px-3 py-3 text-sm font-semibold hover:bg-sand" />
+          <>
+            <Link
+              href="/weddings"
+              onClick={closeMenu}
+              className="rounded-lg px-3 py-3 text-sm font-semibold hover:bg-sand"
+            >
+              My Weddings
+            </Link>
+            <SignOutButton className="rounded-lg px-3 py-3 text-sm font-semibold hover:bg-sand" />
+          </>
         ) : (
           <>
             <Link

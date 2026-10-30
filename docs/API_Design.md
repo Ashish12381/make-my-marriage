@@ -255,6 +255,8 @@ All paths in this and subsequent tables are relative to `/api/v1`.
 
 Server sets `createdBy`, all storage counters, `guestAccessExpiryMode=DEFAULT`, the default guest-access date, and the first membership. `slug` is unique (`409 SLUG_TAKEN`). Do **not** accept a budget field. If no event exists, use the wedding's local `weddingDate` to compute expiry; recompute the default when later events are added/changed.
 
+As requested on 29 October 2026, creation also returns `409 DUPLICATE_WEDDING` when the same creator already has a non-deleted wedding for the same normalized full-name pair, regardless of title, date or slug. Case, whitespace, Unicode composition and name order do not distinguish couples. Edits cannot introduce a duplicate under the wedding's original creator. This is account-scoped, not a global identity check. Multiple distinct weddings remain allowed with no configured per-user count limit. `coupleKey` is server-owned and must not be accepted in request bodies.
+
 **Guest-access settings request**:
 
 ```json

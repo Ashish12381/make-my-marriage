@@ -33,6 +33,12 @@ const envSchema = z.object({
   AUTH_SECRET: optionalString.pipe(z.string().min(32).optional()),
   SESSION_DAYS: z.coerce.number().int().min(1).max(30).default(7),
   AUTH_TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(1).default(0),
+  WEDDING_STORAGE_QUOTA_BYTES: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(Number.MAX_SAFE_INTEGER)
+    .default(0),
   MONGODB_URI: optionalString.pipe(
     z
       .string()

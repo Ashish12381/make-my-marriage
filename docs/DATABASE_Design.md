@@ -118,6 +118,7 @@ The central tenant record. No budget, spending limit or financial allocation fie
   _id: ObjectId,
   title: string,
   brideName: string, groomName: string,
+  coupleKey?: string,             // server-only normalized full-name pair hash; legacy records may omit
   weddingDate: string,             // local YYYY-MM-DD (civil date)
   timezone: string,                // IANA zone
   slug: string,
@@ -139,6 +140,8 @@ The central tenant record. No budget, spending limit or financial allocation fie
 ```
 
 **Indexes:** unique `{ slug: 1 }`; `{ createdBy: 1, createdAt: -1 }`; `{ status: 1 }`. Coordinates are kept for Google Places searches, but a MongoDB `2dsphere` index is **not needed in V1** unless we actually run MongoDB geospatial queries.
+
+**Duplicate protection (29 October 2026 user requirement):** Unique `{ createdBy: 1, coupleKey: 1 }` for records with a string `coupleKey` and `deletedAt: null`. The server computes SHA-256 over a sorted JSON pair of full names normalized with NFKC, collapsed whitespace and lowercase. Title, date and slug do not distinguish duplicates. Scope is the original creator, across non-deleted statuses; identical names in different accounts remain allowed. Legacy records without the key are checked by normalized names during writes, without automatic deletion or merging. Name edits check for collisions and set the key. The key is never accepted from clients or included in public DTOs. No per-user creation count limit is configured.
 
 **Expiry policy:** Default `guestAccessExpiresAt` to **30 days after the final scheduled wedding event**, end-of-day in the wedding timezone; when there are no events yet, use `weddingDate`. The Wedding Admin may set a custom date, but it must be **after** the final scheduled event. If the wedding/event date changes, recompute only when `guestAccessExpiryMode === 'DEFAULT'`; otherwise prompt the admin to review the custom expiry. Backend authorization checks this date on every guest-token request. Public website pages may remain public after private guest links expire.
 

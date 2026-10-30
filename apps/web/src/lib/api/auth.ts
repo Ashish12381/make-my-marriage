@@ -33,6 +33,7 @@ export async function signOut() {
 }
 export async function authErrorMessage(
   error: unknown,
+  fallback = 'We could not reach the account service. Please try again.',
 ): Promise<{ message: string; fields: Record<string, string> }> {
   if (error instanceof ApiError) {
     try {
@@ -51,5 +52,5 @@ export async function authErrorMessage(
       /* Unexpected response bodies get the safe fallback below. */
     }
   }
-  return { message: 'We could not reach the account service. Please try again.', fields: {} };
+  return { message: fallback, fields: {} };
 }

@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 import { env } from '../../config/env.js';
 import { auditRepository } from './audit.repository.js';
 export const initializeAudit = () => auditRepository.initialize();
+export const recordWeddingChange = auditRepository.recordWeddingChange;
 export async function allowAuthenticationAttempt(ip: string, email: string) {
   const windowMs = 15 * 60 * 1000;
   const window = Math.floor(Date.now() / windowMs);

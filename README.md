@@ -106,7 +106,7 @@ Run these from the repository root:
 | `npm run build`        | Build contracts before the API and web applications                       |
 | `npm run lint`         | Run ESLint across application and shared code                             |
 | `npm run typecheck`    | Check strict TypeScript types across workspaces                           |
-| `npm run test`         | Run the API test foundation                                               |
+| `npm run test`         | Run API and frontend regression suites; Atlas tests are opt-in            |
 | `npm run format`       | Apply Prettier formatting                                                 |
 | `npm run format:check` | Check formatting without changing files                                   |
 
@@ -118,7 +118,7 @@ Read [`AGENTS.md`](AGENTS.md) before changing domain behavior. Approved source d
 
 Wedding is the tenant boundary. Future persistence must enforce `weddingId` and same-wedding references. The V1 uses revocable opaque sessions, family-level guest groups, event-specific family RSVP, integer paise for money, and R2 for compressed images and thumbnails. Shared contracts must stay independent of Mongoose, Express, and Next.js.
 
-Users, sessions, and redacted authentication-attempt audit records have concrete schemas. Wedding CRUD, membership authorization, password reset/email delivery, RSVP, provider integrations, media flows, wedding websites, reminders, and platform administration remain deferred. Model locations and integration foundations do not imply these features work. Do not add fake product logic to fill placeholders.
+Users, sessions, weddings, wedding memberships, unpublished website settings, and audit records have concrete schemas. Wedding creation/list/read and Admin-only detail updates are implemented with scoped membership checks and transactional creation. Family invitations/permission mutations, password recovery, RSVP, provider operations, media, published websites, reminders and platform administration remain pending. See [`docs/WEDDING_ONBOARDING.md`](docs/WEDDING_ONBOARDING.md) for the current slice and verification.
 
 `apps/web` and `apps/api` are intended to become separate Vercel projects. Deployment configuration and Vercel Cron setup are deferred; this phase does not deploy either application or connect real services.
 

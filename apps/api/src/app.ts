@@ -4,6 +4,7 @@ import express from 'express';
 import helmet from 'helmet';
 import { randomUUID } from 'node:crypto';
 import { authRouter } from './modules/auth/index.js';
+import { weddingsRouter } from './modules/weddings/index.js';
 import { errorHandler } from './common/errors/error-handler.js';
 import { notFound } from './common/middleware/not-found.js';
 import { env } from './config/env.js';
@@ -27,6 +28,7 @@ app.get('/api/v1/health', (_request, response) => {
 });
 
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/weddings', weddingsRouter);
 // Other business routers stay unmounted until their validation and authorization exist.
 app.use(notFound);
 app.use(errorHandler);

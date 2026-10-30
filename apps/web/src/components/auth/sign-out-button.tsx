@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { authErrorMessage, signOut } from '@/lib/api/auth';
+import { authErrorMessage } from '@/lib/api/auth';
+import { logoutAndGoHome } from '@/lib/auth/logout';
 
 export function SignOutButton({ className }: { className?: string }) {
   const [busy, setBusy] = useState(false);
@@ -12,9 +13,7 @@ export function SignOutButton({ className }: { className?: string }) {
     setBusy(true);
     setMessage('');
     try {
-      await signOut();
-      // Discard cached session-dependent pages after the API clears the cookie.
-      window.location.replace('/');
+      await logoutAndGoHome();
     } catch (error) {
       setMessage((await authErrorMessage(error)).message);
       setBusy(false);

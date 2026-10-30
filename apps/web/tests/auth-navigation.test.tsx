@@ -70,10 +70,10 @@ describe('server session resolution', () => {
 });
 
 describe('authentication navigation', () => {
-  it('links signed-in visitors directly to their account instead of signup', () => {
+  it('links signed-in visitors directly to their weddings instead of signup', () => {
     const html = renderToStaticMarkup(<HeroSection signedIn />);
-    expect(html).toContain('href="/account"');
-    expect(html).toContain('Your Account');
+    expect(html).toContain('href="/weddings"');
+    expect(html).toContain('My Weddings');
     expect(html).not.toContain('href="/signup"');
   });
   it('keeps Start Planning linked to signup for signed-out visitors', () => {

@@ -43,7 +43,15 @@ export function LandingHeader({ signedIn }: { signedIn: boolean }) {
         </nav>
         <div className="flex items-center gap-3 sm:gap-4">
           {signedIn ? (
-            <SignOutButton className="hidden rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-hover sm:block" />
+            <>
+              <Link
+                href="/weddings"
+                className="hidden rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-hover sm:block"
+              >
+                My Weddings
+              </Link>
+              <SignOutButton className="hidden px-2 py-3 text-sm font-semibold text-muted sm:block" />
+            </>
           ) : (
             <>
               <Link
@@ -89,7 +97,10 @@ export function LandingFooter({ signedIn }: { signedIn: boolean }) {
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
             {signedIn ? (
-              <SignOutButton />
+              <>
+                <Link href="/weddings">My Weddings</Link>
+                <SignOutButton />
+              </>
             ) : (
               <>
                 <Link href="/login">Sign In</Link>

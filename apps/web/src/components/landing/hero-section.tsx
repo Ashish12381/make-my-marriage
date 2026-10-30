@@ -32,9 +32,9 @@ export function HeroSection({ signedIn }: { signedIn: boolean }) {
           <div className="mt-space-lg flex flex-wrap items-center justify-center gap-space-md">
             <Link
               className="inline-flex h-12 items-center justify-center gap-space-xs rounded-xl bg-primary px-space-lg font-label-lg text-label-lg font-semibold text-white shadow-md shadow-primary/20 transition-all hover:bg-primary-hover hover:shadow-lg"
-              href={signedIn ? '/account' : '/signup'}
+              href={signedIn ? '/weddings' : '/signup'}
             >
-              <span>{signedIn ? 'Your Account' : 'Start Planning'}</span>
+              <span>{signedIn ? 'My Weddings' : 'Start Planning'}</span>
               <LandingIcon name="arrow_forward" className="text-[20px]" />
             </Link>
             <Link

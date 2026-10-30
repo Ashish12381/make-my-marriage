@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { AuthUser } from '@make-my-marriage/contracts';
-import { signOut, authErrorMessage } from '@/lib/api/auth';
+import { authErrorMessage } from '@/lib/api/auth';
+import { logoutAndGoHome, redirectAfterSessionLoss } from '@/lib/auth/logout';
 import { watchCurrentUser } from '@/lib/auth/watch-current-user';
 import { ApiError } from '@/lib/api/client';
 import { AuthHeart } from './auth-shell';
@@ -20,7 +21,7 @@ export function AccountPanel() {
       onError: async (error) => {
         setUser(null);
         if (error instanceof ApiError && error.response.status === 401) {
-          window.location.replace('/login');
+          redirectAfterSessionLoss();
         } else setMessage((await authErrorMessage(error)).message);
       },
     });
@@ -29,8 +30,7 @@ export function AccountPanel() {
     setBusy(true);
     setMessage('');
     try {
-      await signOut();
-      window.location.replace('/');
+      await logoutAndGoHome();
     } catch (error) {
       setMessage((await authErrorMessage(error)).message);
       setBusy(false);
@@ -53,14 +53,12 @@ export function AccountPanel() {
           <p className="auth-account-email">{user.email}</p>
           <div className="auth-checklist">
             <strong>You’re signed in.</strong>
-            <p>
-              Your account is ready. Wedding workspace setup is the next feature being developed.
-            </p>
-            <p>
-              You’ll be able to add your wedding details, invite your family, and start planning
-              here.
-            </p>
+            <p>Your account is ready. Open My Weddings to create or manage your wedding space.</p>
+            <p>Save wedding details and switch between the weddings you belong to.</p>
           </div>
+          <Link href="/weddings" className="auth-primary">
+            My Weddings →
+          </Link>
           <button className="auth-primary" onClick={logout} disabled={busy}>
             {busy ? 'Signing out…' : 'Sign Out'}
           </button>

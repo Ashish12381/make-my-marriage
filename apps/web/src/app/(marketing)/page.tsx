@@ -12,6 +12,7 @@ import { LivestreamSection } from '@/components/landing/livestream-section';
 import { HowItWorksSection } from '@/components/landing/how-it-works-section';
 import { ClosingSection } from '@/components/landing/closing-section';
 import { getServerUser } from '@/lib/auth/server-session';
+import { LandingSessionSync } from '@/components/landing/landing-session-sync';
 
 export const metadata: Metadata = {
   title: 'Make My Marriage | One wedding. Both families.',
@@ -23,6 +24,7 @@ export default async function HomePage() {
   const signedIn = Boolean(await getServerUser());
   return (
     <div className="landing-page bg-oat-milk text-espresso antialiased">
+      <LandingSessionSync />
       <a className="landing-skip-link" href="#main-content">
         Skip to content
       </a>

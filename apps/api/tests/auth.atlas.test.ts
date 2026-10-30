@@ -46,7 +46,7 @@ async function checkHomepage(cookie: string, signedIn: boolean) {
   if (signedIn) {
     expect(header).toContain('Sign Out');
     expect(header).not.toContain('href="/login"');
-    expect(html).toContain('href="/account"');
+    expect(html).toContain('href="/weddings"');
     expect(html).not.toContain('href="/signup"');
   } else {
     expect(header).toContain('href="/login"');
