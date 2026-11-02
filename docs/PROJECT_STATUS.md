@@ -1,10 +1,14 @@
 # Make My Marriage — Project Status
 
-**Last updated:** 2026-10-30
+**Last updated:** 2026-11-02
 
-**Current local commit:** `7498788` — `feat(auth): implement account registration and session authentication`. Wedding onboarding, duplicate protection, logout fixes, QA documentation and other working-tree changes remain uncommitted. Recheck Git status when resuming; this document does not establish remote push or CI status.
+**Latest milestone:** Family & Team invitation/account guidance and signed-in navbar identity are implemented. Local QA on 2 November confirmed an invited recipient appearing in Members after acceptance, email prefill, account switching, permission updates and cross-tab logout. One low-priority dialog warning remains (QA-03). See [the latest QA report](MANUAL_QA_2026-11-02.md).
 
-**Current stage:** Public homepage, Atlas-backed authentication, and the first wedding-onboarding milestone are implemented. Family invitations/permissions and the remaining planning workflows are pending.
+**Current local commit:** `a9fe7d4` — `feat(weddings): add onboarding and workspace management`. Family & Team and its related code/documentation changes are currently uncommitted. Recheck Git status when resuming; this document does not establish remote push or CI status.
+
+**Current stage:** Public homepage, Atlas-backed authentication, wedding onboarding, and the first Family & Team milestone are implemented. Planning-team invitations, acceptance, Admin-only access changes and last-Admin protection are built; events and the remaining planning workflows are pending. The user confirmed receiving a development invitation in Spam on 2 November; production sender setup and broader rollout QA remain pending.
+
+Local email testing uses `onboarding@resend.dev`, restricted to the email registered with the Resend account. A real invitation was received and accepted; sending to other recipients still requires a verified owned domain. Old invitation history is preserved. No production deployment is recorded.
 
 Wedding creation and editing now offer optional title suggestions from the couple’s first names. Selecting a suggestion fills the editable title; changing names preserves any existing title.
 
@@ -36,7 +40,8 @@ The verified application runs locally. A successful production build has been co
 | MongoDB Atlas | Connected development database `make_my_marriage_dev`; auth and wedding persistence tested | Establish production database/access configuration and backup/restore procedures before rollout |
 | Browser sessions | Working locally across localhost ports; cross-tab logout regressions fixed | Verify production cookie hostname/proxy topology, credentialed requests, exact allowed Origin and CSRF behavior over HTTPS |
 | CI | GitHub Actions verification workflow exists | Remote workflow results for the current changes have not been checked; the workflow does not deploy |
-| Email, media, vendor discovery | Resend, R2 and Google Places configuration foundations only | Implement and configure each provider when its feature is built; no operational integration has been verified |
+| Email | Bounded membership email integration and delivery records implemented; development invitation received in Spam using the restricted test sender | Verify an owned domain for other recipients; complete broader delivery testing |
+| Media and vendor discovery | R2 and Google Places configuration foundations only | Implement and verify each integration when its feature is built |
 
 Deployment and public release remain separate follow-up work. No deployment was performed as part of onboarding or the logout fixes. Production readiness still requires the remaining release/security and operational checks; the current PRD scope is not complete.
 
@@ -50,9 +55,9 @@ Deployment and public release remain separate follow-up work. No deployment was 
 - API liveness endpoint: `GET /api/v1/health` returns `{ "status": "ok" }`.
 - Helmet, credential-aware frontend CORS, JSON body limits, cookie parsing, request validation infrastructure, not-found handling, and sanitized error handling.
 - Zod environment validation and optional MongoDB connection at startup. The scaffold can run without a configured database.
-- Auth and wedding creation/list/read/update routes are mounted. Other business routers remain unmounted.
-- Session authentication validates hashed tokens, expiry, revocation, and active users. Wedding onboarding checks active memberships and Admin-only editing in backend services. Feature-specific organizer permissions and membership mutation endpoints remain pending; the old scaffold wedding-access middleware is not used to grant access.
-- R2, Resend, and Google Places configuration-validation foundations; no provider operations.
+- Auth, wedding creation/list/read/update, and membership/invitation routes are mounted. Other business routers remain unmounted.
+- Session authentication validates hashed tokens, expiry, revocation, and active users. Wedding and membership services enforce active memberships and Admin-only mutations. A public Organizer feature guard exists for future business modules. The old scaffold wedding-access middleware is not used to grant access.
+- R2 and Google Places configuration-validation foundations; bounded Resend membership email integration with persisted delivery attempts. The initial send failed sender-domain verification; a later development invitation reached Spam using the restricted test sender.
 - Browser API client configured to include credentials. No browser token storage or JWT authentication.
 - Formatting, lint, typecheck, tests, build scripts, and CI configuration.
 - Shared contracts contain Zod signup/login and wedding validators, public auth/wedding DTOs, and response schemas consumed by both applications.
@@ -77,26 +82,26 @@ Implemented sections: hero/dashboard preview, feature overview, family collabora
 
 ## Status against the PRD
 
-The public marketing homepage, signup/login and initial wedding-onboarding milestones are implemented. Marketing samples do not complete the corresponding business modules.
+The public marketing homepage, signup/login, wedding onboarding and initial Family & Team milestones are implemented. Marketing samples do not complete the corresponding business modules.
 
 | PRD area | Current status | Remaining implementation |
 | --- | --- | --- |
-| 6.1 / FR-01 — Authentication & Wedding Setup | Auth, My Weddings, atomic wedding creation, initial Admin membership, overview, detail editing and switching implemented | Password reset, profile editing, cover uploads, later slug editing, expected-size schema reconciliation, and broader invite/first-event onboarding |
-| 6.2 / FR-02 — Family & Organizer Management | Initial Admin membership, scoped reads and Admin-only detail updates | Invitations/acceptance, role/permission mutations, responsibilities, last-admin protection and member activity UI |
+| 6.1 / FR-01 — Authentication & Wedding Setup | Auth, signed-in navbar identity, invitation-linked email prefill, My Weddings, atomic wedding creation, initial Admin membership, overview, detail editing and switching implemented | Password reset, profile editing, cover uploads, later slug editing, expected-size schema reconciliation, and broader invite/first-event onboarding |
+| 6.2 / FR-02 — Family & Organizer Management | Members/Invitations UI, email-matched token acceptance, recipient signup/login guidance, role/permission changes, removal/revocation, audit records, concurrent last-admin protection and public feature guard implemented | QA-03 stale validation message, event-specific responsibilities, enforcement in future modules, member activity UI, production sender setup and broader rollout QA |
 | 6.3 / FR-03 — Multiple Wedding Events | Scaffold only | Event CRUD, organizers, related records, default albums, and published event updates |
 | 6.4 / FR-04 — Wedding Dashboard | Real initial wedding overview and calculated countdown | Authorized planning aggregates, family RSVP summaries, expense totals, tasks, activity and quick actions |
 | 6.5 / FR-05 — Task Planner | Route placeholder; interactive homepage sample | Persistent tasks, assignment, checklist/comments, views/filters, templates, and reminders |
 | 6.6 / FR-06 — Expenses & Payment Records | Route placeholder; sample charts/cards | Expenses, payments, paise calculations, attachments, reports, CSV export, and linked vendor ledger |
 | 6.7 / FR-07 — Vendor Discovery & Management | Route placeholder; illustrative vendor cards | Google Places discovery, filters/map, manual vendors, shortlist/status, notes, quotations, and expense links |
 | 6.8 / FR-08 — Guests & Family RSVP | Route placeholder; sample invitation | Family records/import, event invitations, guest access tokens, per-event responses/deadlines, and exports |
-| 6.9 / FR-09 — Invitations & Email | Route placeholder; Resend configuration validation | Invitation templates, delivery records, bounded sends/retries, confirmations, reminders, and preferences |
+| 6.9 / FR-09 — Invitations & Email | Planning-team invitation template, bounded Resend sends and persisted delivery status implemented; one recipient lifecycle checked | Guest/event invitation campaigns, confirmations, reminders, preferences, approved retry/resend behavior and production sender setup |
 | 6.10 / FR-10 — Gallery | Route placeholder; R2 configuration validation | Albums, compression/thumbnails, upload reservations/verification, privacy enforcement, QR links, quotas, and downloads |
 | 6.11 / FR-11 — Wedding Website | Management route placeholder; homepage sample | Templates/settings, slug-based guest website, publish/unpublish, authorized content, and English/Hindi guest labels |
 | 6.12 / FR-12 — YouTube Links | Homepage demonstration only | Per-event URL validation/storage, enable/disable, visibility checks, and real outbound live/recording links |
 | 6.13 / FR-13 — Platform Admin | Backend module structure only | Protected admin UI, operational capabilities, strengthened access, and audited intervention |
 | PRD non-functional and release acceptance requirements | Foundation checks only | End-to-end security, tenant isolation, provider behavior, accessibility/performance, operational readiness, and release scenarios |
 
-Concrete users/sessions, weddings, wedding memberships, unpublished website settings and audit schemas are implemented. Wedding creation uses public module interfaces and one transaction. Other business schemas/workflows, guest website routes, and platform administration remain pending. An existing route returning HTTP 200 does not mean its feature is complete.
+Concrete users/sessions, weddings, wedding memberships/invites, email delivery history, unpublished website settings and audit schemas are implemented. Wedding creation and membership mutations use public module interfaces and transactions. Other business schemas/workflows, guest website routes, and platform administration remain pending. An existing route returning HTTP 200 does not mean its feature is complete.
 
 ## Decisions to preserve
 
@@ -105,7 +110,7 @@ Use the complete rules in AGENTS.md and the design documents. Particularly:
 - Wedding is the tenant boundary. Enforce authorization and same-wedding references in services and scoped queries.
 - Retain the modular monolith and exactly 18 core collections from the Database Design. Do not introduce extra livestream/admin collections or queue infrastructure.
 - Authentication uses bcrypt and revocable opaque sessions in secure HTTP-only cookies, with hashed tokens in MongoDB. No JWTs or browser token storage. Signup/member acceptance does not require email verification.
-- Allow multiple Wedding Admins and module-specific Organizer permissions; protect the last active admin.
+- Allow multiple Wedding Admins and module-specific Organizer permissions; protect the last active admin. Membership acceptance requires a valid invitation token and the invited normalized account email; matching email alone grants no access.
 - Guests do not register. One family record and active access link per wedding; independent `PENDING`, `YES`, or `NO` per invited event. No individual attendance/headcount tracking.
 - Record money in integer paise and actual payments separately. No budgets, caps, payment processing, or duplicated wedding-wide costs.
 - Store compressed images/thumbnails in R2 and metadata in MongoDB. No retained originals or photo approval workflow. `INVITED_GUESTS` means an actively invited family for the wedding.
@@ -128,7 +133,7 @@ Use the complete rules in AGENTS.md and the design documents. Particularly:
 
 ## Recommended next milestone
 
-Implement member invitations/acceptance and feature permissions, including single-use invite tokens, last-admin protection and audited role changes. Then implement events and tasks. Events must create their default album through the gallery interface and replace wedding-date guest-expiry fallback with the final scheduled event. Password recovery still needs its approved persistence design and Resend configuration. See [AUTH_SETUP.md](AUTH_SETUP.md) and [WEDDING_ONBOARDING.md](WEDDING_ONBOARDING.md).
+Resolve QA-03: switching an invalid zero-permission Organizer invitation to Wedding Admin should clear the obsolete Organizer warning. Complete remaining Family & Team checks, especially new-recipient signup continuation, direct Organizer use, actual revocation/removal/reinvitation and failure recovery. The latest [QA report](MANUAL_QA_2026-11-02.md) confirms the existing-recipient happy path; it does not cover all release scenarios. Then design and implement wedding events, followed by tasks, using the existing feature guard. Events must create their default album through the gallery interface and replace wedding-date guest-expiry fallback with the final scheduled event; event-specific team responsibilities belong to that slice. A verified owned sender domain is needed for arbitrary email recipients. Password recovery still needs its approved persistence design. See [FAMILY_TEAM.md](FAMILY_TEAM.md), [AUTH_SETUP.md](AUTH_SETUP.md) and [WEDDING_ONBOARDING.md](WEDDING_ONBOARDING.md).
 
 ## Wedding onboarding milestone — 2026-10-29
 
@@ -143,24 +148,25 @@ Implement member invitations/acceptance and feature permissions, including singl
 
 ## Verification and local development
 
-Last automated application verification: **2026-10-30**, after the transient background-refresh fix. Earlier onboarding/logout browser coverage and the independent cross-check are recorded in [MANUAL_QA.md](MANUAL_QA.md); those browser checks were performed on 2026-10-29.
+Latest verification: **2026-11-02**. The navbar change passed lint, typecheck, formatting, production build and 116 offline tests (50 API, 66 frontend). The subsequent documentation/manual-QA pass reran lint, typecheck, tests and formatting successfully; it did not rerun the build. The isolated Atlas membership lifecycle passed earlier on the email-matching/recipient-guidance revisions; Atlas tests were not rerun for email prefill, navbar identity or the later browser pass. See [MANUAL_QA_2026-11-02.md](MANUAL_QA_2026-11-02.md) for the latest browser results and [MANUAL_QA.md](MANUAL_QA.md) for historical evidence.
 
 | Check | Result and scope |
 | --- | --- |
 | `npm run lint` | Passed |
 | `npm run typecheck` | Passed |
-| `npm run test` | Passed: 36 offline API tests and 45 frontend tests (81 total); 2 opt-in Atlas lifecycle tests skipped for the refresh UI fix. Earlier Atlas onboarding coverage includes duplicate detection, legacy records, cross-account independence and concurrent creation; see WEDDING_ONBOARDING.md for the opt-in command |
+| `npm run test` | 116 offline tests passed: 50 API and 66 frontend; three opt-in Atlas tests skipped in the latest run. Earlier isolated Atlas membership coverage passed for token/email matching, recipient guidance, atomic rollback, scoped roles, removal/reactivation and last-Admin races. Provider calls in automated tests are mocked |
 | `npm run build` | Passed for contracts, API, and web |
 | `npm run format:check` | Passed |
-| Browser checks | Signup/login validation, creation, suggestions, duplicates, switching, editing/Cancel, persistence, countdowns and mobile navigation passed. QA-01/QA-02 fixes passed focused and independent follow-up checks: homepage sync, clearing another private/edit tab, and consistent desktop/mobile/homepage logout destinations. See MANUAL_QA.md for reproduction details and limits |
+| Browser checks | Latest local pass checked navbar identity, recipient email prefill, wrong-account guidance/switching, accepted membership from the Admin view, permission edits, responsive invitation dialog and cross-tab logout. User performed recipient acceptance; the QA agent independently observed Members 2 and Accepted history. One low-priority finding QA-03 remains. Earlier onboarding coverage is retained in MANUAL_QA.md |
 
-These checks do not validate unimplemented PRD workflows. Earlier automated Atlas tests cover authentication and wedding persistence, authorization and atomic rollback; their isolated fixtures were cleaned up. Manual QA now reuses one dedicated account and two retained synthetic weddings, as requested. Frontend regression tests cover session resolution/signals, auth navigation, logout races/retry, form markup and calendar rules. Manual Organizer, stranger-account, revoked-membership, expired-session and failure-injection scenarios remain unverified; automated coverage is separate evidence. Browser restart and 30-day Remember Me persistence were not time-tested. GitHub CI results and production deployment were not verified.
+These checks do not validate unimplemented PRD workflows. Manual QA reuses the dedicated account and retained weddings. The latest report records one authorized real email and a retained Organizer membership with Events and Tasks access; no further sends are implied by this status update. The QA agent did not operate the recipient's acceptance UI or read-only Organizer view. New-recipient signup continuation, actual decline/revocation/removal/reinvitation, expiry, concurrent Admin changes and failure injection remain manually unverified. Automated coverage is separate evidence. Browser restart and 30-day Remember Me persistence were not time-tested. GitHub CI and production deployment remain unverified.
 
 From the repository root, run `npm run dev`. Web: `http://localhost:3000`; API: `http://localhost:4000`; health: `http://localhost:4000/api/v1/health`. See [README.md](../README.md) for prerequisites and environment setup. Do not overwrite existing local environment files or copy secrets into this document.
 
 ## Known limitations and follow-ups
 
-- Atlas is configured locally and the auth persistence lifecycle passed against `make_my_marriage_dev`. Other core workflows, provider operations, and deployment remain pending.
+- QA-03 (low): after submitting an Organizer invitation with no selected permissions, switching to Wedding Admin leaves the obsolete permission warning visible. Admin sending was not tested in that state; see MANUAL_QA_2026-11-02.md. This status update does not fix the issue.
+- Atlas-backed auth, weddings and membership persistence are implemented. Other business workflows and production deployment remain pending.
 - Auth responses and API errors now include the designed success/error envelope and request ID. Health retains its existing `{ status: "ok" }` liveness payload.
 - Next.js on this Windows workspace encountered generated-cache/compiler failures during verification. A clean build with the dev server stopped passed. Avoid running builds against the same generated output concurrently; clear only the verified generated `.next` directory when recovery is needed.
 - The ceremony preview depends on an external Stitch image URL. Review asset availability and hosting before production release.
@@ -176,9 +182,22 @@ From the repository root, run `npm run dev`. Web: `http://localhost:3000`; API: 
 | Interactive homepage event examples | Complete; five event selectors and sample task panels verified |
 | Project status handoff | Created on 2026-10-08 |
 | Signup/login/session/logout | Implemented; Atlas lifecycle and 2026-10-29 manual browser flows checked |
-| Initial wedding setup and workspace access | Implemented 2026-10-29; broader membership/invitation workflow pending |
+| Initial wedding setup and workspace access | Implemented 2026-10-29; Family & Team added 2026-10-30 |
+| Family & Team membership milestone | Implemented 2026-10-30; recipient guidance/email matching and an accepted membership verified locally on 2026-11-02; QA-03 remains |
+| Invitation account guidance and email prefill | Implemented 2026-11-02; existing-recipient switching/login/prefill checked; new-recipient signup flow needs browser QA |
+| Signed-in navbar identity | Implemented 2026-11-02; desktop name/email, compact mobile name and My Account link; local QA checked identity/logout |
 | Wedding title suggestions and duplicate protection | Implemented; unit, browser and scoped Atlas duplicate/concurrency coverage passed |
 | Manual QA and logout regression fixes | QA-01/QA-02 fixed and independently rechecked 2026-10-29; reusable account and two synthetic weddings retained |
 | Staging/production deployment | Pending; local run/build verified, public deployment not recorded or verified |
 
 After each milestone, update the date and repository reference, revise the PRD status rows, record checks actually run, add any unresolved decisions, and adjust the next milestone. Mark a PRD feature complete only when its real behavior and authorization are implemented and verified; UI previews and scaffold files are insufficient.
+
+## Family & Team and account clarity — 2026-11-02
+
+- Invitation acceptance requires both a valid pending/unexpired token and a signed-in account with the invited normalized email. Other accounts receive `403 INVITE_EMAIL_MISMATCH` without consuming it. Already-active matching members cannot consume another invitation.
+- Valid token preview returns the invited email and account-existence guidance. New recipients see Create account; registered recipients see Sign in; only the matching signed-in account sees Accept. A different browser account is explained with an explicit switch action, without showing that other account's email.
+- Invitation-linked login/signup prefill the email from a fresh validated server preview. The field remains editable, but the API still enforces the invited email. Signup requires a separate login; the invitation continuation survives both steps. Normal login stays blank; unavailable invitations do not prevent manual login.
+- Admins can revoke pending invitations or remove joined members through Members → Manage access → Remove member. Removal preserves the app account/history and permits reinvitation/reactivation. Accepted history alone does not block a new invitation. The last Admin is protected.
+- Homepage/workspace navigation shows the signed-in name/email and initial avatar on desktop, with a compact name on mobile. It links to My Account. The auth/account header also resolves identity. Existing session signals/focus revalidate it and confirmed logout clears it.
+- Latest browser QA used the saved manual QA account and retained weddings. The recipient accepted outside the agent's browser; Admin-side verification showed the new Organizer, Accepted history, and persistent Events/Tasks access. QA-03 is the only reported finding in that pass; remaining limits are listed above.
+- Current development servers were restarted after the successful production build. No commits, pushes or production deployment were made. The earlier Windows generated-cache build failure was resolved by clearing only the verified `.next` directory with dev stopped.

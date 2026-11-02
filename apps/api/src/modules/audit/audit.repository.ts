@@ -1,6 +1,28 @@
 import { AuditLog } from './models/audit-log.model.js';
 import type { ClientSession } from 'mongoose';
 export const auditRepository = {
+  async recordMembershipChange(
+    weddingId: string,
+    actorUserId: string | undefined,
+    action: string,
+    resourceId: string,
+    session: ClientSession,
+    actorType: 'WEDDING_ADMIN' | 'ORGANIZER' | 'SYSTEM' = actorUserId ? 'WEDDING_ADMIN' : 'SYSTEM',
+  ) {
+    await AuditLog.create(
+      [
+        {
+          weddingId,
+          ...(actorUserId ? { actorUserId } : {}),
+          actorType,
+          action,
+          resourceType: 'membership',
+          resourceId,
+        },
+      ],
+      { session },
+    );
+  },
   async recordWeddingChange(
     weddingId: string,
     actorUserId: string,

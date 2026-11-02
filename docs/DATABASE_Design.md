@@ -185,7 +185,7 @@ An invitation to join a wedding's management team; **different** from a guest/fa
 }
 ```
 
-**Indexes:** unique `{ tokenHash: 1 }`; `{ weddingId: 1, invitedEmailNormalized: 1, status: 1 }`. `expiresAt` is checked on redemption; do **not** TTL-delete this document immediately if invitation history must remain visible. Acceptance must atomically create/reactivate membership and consume the single-use token. The token is the possession proof; merely entering the invited email is **not** authorization.
+**Indexes:** unique `{ tokenHash: 1 }`; `{ weddingId: 1, invitedEmailNormalized: 1, status: 1 }`. `expiresAt` is checked on redemption; do **not** TTL-delete this document immediately if invitation history must remain visible. Acceptance must atomically create/reactivate membership and consume the single-use token. As approved on 2 November 2026, the authenticated user's normalized email must equal `invitedEmailNormalized`; mismatch must leave the invite pending. The token is still required possession proof; merely entering the invited email is **not** authorization. Removing membership marks it REVOKED; a fresh invitation can reactivate the same unique membership row without deleting the account or old invitation history.
 
 ### 3.6 `events`
 

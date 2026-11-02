@@ -1,9 +1,24 @@
-import type { Types } from 'mongoose';
+import type { Types, ClientSession } from 'mongoose';
 import type { SignupInput } from '@make-my-marriage/contracts';
 import { User } from './models/user.model.js';
 import { Session } from './models/session.model.js';
 
 export const authRepository = {
+  getMemberProfiles(ids: string[], session?: ClientSession) {
+    return User.find({ _id: { $in: ids } })
+      .select('displayName email status')
+      .session(session ?? null)
+      .lean()
+      .exec();
+  },
+  async getUserIdForInvite(emailNormalized: string, session?: ClientSession) {
+    const user = await User.findOne({ emailNormalized })
+      .select('_id')
+      .session(session ?? null)
+      .lean()
+      .exec();
+    return user?._id.toString();
+  },
   async initialize() {
     await Promise.all([User.createCollection(), Session.createCollection()]);
     await Promise.all([User.createIndexes(), Session.createIndexes()]);

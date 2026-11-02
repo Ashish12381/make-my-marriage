@@ -3,7 +3,9 @@ import Link from 'next/link';
 import { useRef, type ReactNode } from 'react';
 import { AuthHeart } from '../auth/auth-shell';
 import { SignOutButton } from '../auth/sign-out-button';
-export function WeddingShell({ children }: { children: ReactNode }) {
+import { UserIdentity } from '../auth/user-identity';
+import type { AuthUser } from '@make-my-marriage/contracts';
+export function WeddingShell({ children, user }: { children: ReactNode; user?: AuthUser }) {
   const menuRef = useRef<HTMLDetailsElement>(null);
   const closeMenu = () => menuRef.current?.removeAttribute('open');
   return (
@@ -19,35 +21,38 @@ export function WeddingShell({ children }: { children: ReactNode }) {
               Make My Marriage<small>One wedding. Both families.</small>
             </span>
           </Link>
-          <nav aria-label="Workspace navigation" className="wedding-desktop-nav">
-            <Link href="/weddings">My Weddings</Link>
-            <Link href="/account">My Account</Link>
-            <SignOutButton />
-          </nav>
-          <details
-            className="wedding-mobile-nav"
-            ref={menuRef}
-            onKeyDown={(event) => {
-              if (event.key === 'Escape') {
-                closeMenu();
-                menuRef.current?.querySelector('summary')?.focus();
-              }
-            }}
-          >
-            <summary aria-label="Open workspace navigation">☰</summary>
-            <nav aria-label="Mobile workspace navigation">
-              <Link href="/weddings" onClick={closeMenu}>
-                My Weddings
-              </Link>
-              <Link href="/account" onClick={closeMenu}>
-                My Account
-              </Link>
-              <Link href="/" onClick={closeMenu}>
-                Home
-              </Link>
+          <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+            <UserIdentity initialUser={user ?? null} />
+            <nav aria-label="Workspace navigation" className="wedding-desktop-nav">
+              <Link href="/weddings">My Weddings</Link>
+              <Link href="/account">My Account</Link>
               <SignOutButton />
             </nav>
-          </details>
+            <details
+              className="wedding-mobile-nav"
+              ref={menuRef}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') {
+                  closeMenu();
+                  menuRef.current?.querySelector('summary')?.focus();
+                }
+              }}
+            >
+              <summary aria-label="Open workspace navigation">☰</summary>
+              <nav aria-label="Mobile workspace navigation">
+                <Link href="/weddings" onClick={closeMenu}>
+                  My Weddings
+                </Link>
+                <Link href="/account" onClick={closeMenu}>
+                  My Account
+                </Link>
+                <Link href="/" onClick={closeMenu}>
+                  Home
+                </Link>
+                <SignOutButton />
+              </nav>
+            </details>
+          </div>
         </div>
       </header>
       <main id="wedding-content" className="wedding-content">

@@ -5,15 +5,22 @@ import { useRouter } from 'next/navigation';
 import { signupSchema, loginSchema } from '@make-my-marriage/contracts';
 import { submitAuth, authErrorMessage } from '@/lib/api/auth';
 import { AuthHeart } from './auth-shell';
+import { invitationReturnPath } from '@/lib/auth/return-path';
 
 export function AuthForm({
   mode,
   accountCreated = false,
+  returnTo = '/',
+  initialEmail = '',
 }: {
   mode: 'login' | 'signup';
   accountCreated?: boolean;
+  returnTo?: string;
+  initialEmail?: string;
 }) {
   const isSignup = mode === 'signup';
+  const destination = invitationReturnPath(returnTo);
+  const continuation = destination === '/' ? '' : `next=${encodeURIComponent(destination)}`;
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -55,8 +62,8 @@ export function AuthForm({
     try {
       await submitAuth(mode, parsed.data);
       form.reset();
-      if (isSignup) router.replace('/login?registered=1');
-      else window.location.replace('/');
+      if (isSignup) router.replace(`/login?registered=1${continuation ? `&${continuation}` : ''}`);
+      else window.location.replace(destination);
     } catch (error) {
       const result = await authErrorMessage(error);
       setErrors(result.fields);
@@ -116,6 +123,7 @@ export function AuthForm({
             <input
               id="email"
               name="email"
+              defaultValue={initialEmail}
               type="email"
               inputMode="email"
               autoComplete="email"
@@ -223,7 +231,9 @@ export function AuthForm({
           </button>
           <p className="auth-switch">
             {isSignup ? 'Already have an account?' : 'New to Make My Marriage?'}{' '}
-            <Link href={isSignup ? '/login' : '/signup'}>
+            <Link
+              href={`${isSignup ? '/login' : '/signup'}${continuation ? `?${continuation}` : ''}`}
+            >
               {isSignup ? 'Sign In' : 'Create an account'}
             </Link>
           </p>

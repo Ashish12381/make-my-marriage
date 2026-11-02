@@ -1,5 +1,7 @@
 # Manual QA — 29 October 2026
 
+Latest full browser pass: [2 November 2026 report](MANUAL_QA_2026-11-02.md), including Family & Team and one explicitly authorized real invitation email. The original findings and limits below are historical; use the latest report for current coverage.
+
 Browser interaction QA against the local application at `http://localhost:3000`, using its configured development API and Atlas persistence. This report describes observed behavior in the current working tree, including existing uncommitted onboarding changes. Application code was not changed to fix findings.
 
 ## Reusable account
@@ -114,8 +116,34 @@ Review identified a P2 issue: a network/5xx response during tab-activation refre
 
 Six automated state-transition regressions cover failure/retry/recovery, access rejection, reduced permissions, initial-load errors and Cancel/save. Default tests pass 81 cases (36 API + 45 frontend); 2 Atlas tests are skipped. Browser failure injection and Atlas tests were not run for this frontend-only fix. The earlier browser results above remain historical evidence, not a manual verification of temporary refresh failures.
 
+## Family & Team milestone — 30 October 2026
+
+The new planning-team screens and invitation/access-management backend are implemented. Browser automation failed to initialize, including after reset, so desktop/mobile/keyboard interaction checks for this feature were not performed in this run. Do not treat earlier onboarding browser results as Family & Team coverage.
+
+All 104 automated tests passed across verification with the three Atlas flags enabled (53 API, 51 frontend). The final parallel run encountered an auth-infrastructure 503 at CSRF initialization; its isolated retry passed. Membership coverage uses isolated synthetic fixtures with email mocked and scoped cleanup; it verifies token privacy/possession, duplicate invites, forced-write rollback, concurrent acceptance, Organizer restrictions, role changes, last-Admin races, revocation/reactivation, expiry/decline, saved email status, CSRF and audit. Existing reusable manual QA credentials and the two retained weddings were preserved.
+
+The user explicitly authorized one real test invitation from the first retained QA wedding to the address configured as `RESEND_FROM_EMAIL`. The saved QA account was reused; no new manual QA account was created. The API returned 201 and retained pending invitation `6ae4306b3acc55ea465821d1`, but Resend rejected the email because the sender domain is not verified. The delivery record is FAILED. No inbox delivery or automatic retry occurred; the smoke-test session was revoked. After correcting the sender configuration, revoke this pending test invitation before creating a replacement. Do not paste its private token or credentials into this report.
+
+Next manual checks: members/empty invitations, visible email field, all nine initially unchecked permissions, role switching, validation and cancellation, mobile full-screen dialog and focus handling, acceptance through signup/login, permission changes/removal, read-only Organizer view, session loss and transient-refresh draft preservation. Use an explicitly authorized email recipient for delivery testing. See FAMILY_TEAM.md for scope and setup.
+
+## Invitation accepted under an existing account — 2 November 2026
+
+The user confirmed receiving the development invitation in Spam. Read-only diagnosis of invitation `6ae816299c675633386871c2` found it was accepted by QA Manual Tester, already an active Admin of the second retained QA wedding. No separate recipient account membership was created. Accepted invitation history remains valid history; it does not imply another person joined.
+
+The API now rejects acceptance by an active member with `409 ALREADY_A_MEMBER` before consuming the invitation. The invitation page retains its controls and offers Switch account, returning to the invitation after login. A lifecycle regression checks that the invitation stays pending after the existing Admin's attempt and remains redeemable by a new member. Historical records and retained manual QA accounts were not modified, and no replacement email was sent. Browser interaction verification of Switch account remains pending.
+
 ## Limits
+
+2 November follow-up: the owner approved restricting acceptance to the invited normalized email, in addition to valid token possession and login. The lifecycle regression now rejects both a wrong-account Admin and a wrong-account nonmember without consuming the invitation, then exercises the intended recipient's acceptance. Existing removal coverage checks loss of wedding access and reinvitation/reactivation without duplicate memberships. The member-management markup test checks the Remove member control for a non-final Admin. Browser interaction QA of the revised flow remains pending. No retained manual QA account, wedding, membership or invitation was reset, and no real email was sent for this change.
+
+Lint, typecheck, formatting, 102 offline tests and the isolated Atlas membership lifecycle passed for the email-restriction revision. A read-only check found that the recipient of the earlier accepted QA invitation has no app account, membership or pending invitation in that wedding. A fresh invite can be created without deleting anything; the recipient must register/sign in with that address before accepting. The other two Atlas suites were not rerun.
 
 This is one Chromium-based in-app browser pass, not a release/security certification or a full device matrix. No manual Organizer, revoked-membership, suspended-user, stranger-account, expired-session, concurrent-edit, or API-failure injection scenarios were performed. Browser restart persistence, cookie attributes, transaction rollback and 30-day expiry were not manually validated. Existing automated coverage is separate evidence.
 
 Events, member invitations, tasks, expenses/payments, guests/RSVP, gallery/media, vendor discovery, email delivery, published websites and livestream configuration are not implemented product workflows yet; marketing examples and route scaffolds were not counted as working features. No provider calls, email sends, media uploads, deployment, commits, or pushes were performed.
+
+Verification for recipient guidance: lint, typecheck, formatting, production build, 107 offline tests (50 API, 57 frontend), and the isolated Atlas membership lifecycle passed. Five new UI cases cover new/registered signed-out recipients, both wrong-account states and matching-account acceptance. Atlas verifies existing/new recipient preview guidance and unavailable-token rejection. The other two Atlas tests and browser interaction QA were not run. No real email was sent or retained QA data modified.
+
+Email-prefill verification, 2 November 2026: lint, typecheck, formatting and production build passed. The offline suites passed 113 tests (50 API, 63 frontend) across runs. Six added auth-navigation cases cover validated invitation prefill, signup-to-login continuation, ordinary/untrusted paths, unavailable invitations, malformed responses and network failure. An initial test reused a consumed mock Response; correcting the mock to return a fresh response made the frontend suite pass. Atlas tests and browser interaction checks were not rerun for this frontend change. No provider calls or real emails were made.
+
+Navbar identity verification, 2 November 2026: lint, typecheck, formatting, 116 offline tests (50 API, 66 frontend) and production build passed. Three new markup regressions cover homepage identity, workspace identity and signed-out omission. A strict optional-prop type error was corrected; a subsequent Windows ENOTEMPTY cache error was resolved by clearing only the verified generated apps/web/.next directory with dev stopped. Browser/mobile interaction checks and Atlas tests were not rerun. Existing session watcher coverage remains separate evidence; no real email or retained QA data changes were made.

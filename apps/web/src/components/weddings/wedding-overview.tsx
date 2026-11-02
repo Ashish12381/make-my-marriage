@@ -173,6 +173,12 @@ function WeddingOverviewContent({ weddingId, ready }: { weddingId: string; ready
         </div>
       </section>
       <section className="wedding-card wedding-details">
+        <Link
+          href={`/weddings/${wedding.id}/family`}
+          className="wedding-button wedding-button-secondary"
+        >
+          Family &amp; Team →
+        </Link>
         <h2>Your wedding details</h2>
         <WeddingSummary wedding={wedding} />
         <div className="wedding-reserved">

@@ -13,6 +13,14 @@ function venue(input: CreateWeddingInput['defaultVenue']) {
   };
 }
 export const weddingsRepository = {
+  async lockMembershipChanges(id: string, session: ClientSession) {
+    const result = await WeddingModel.updateOne(
+      { _id: id, status: 'ACTIVE', deletedAt: null },
+      { $inc: { __v: 1 } },
+      { session },
+    );
+    return result.matchedCount === 1;
+  },
   async initialize() {
     await WeddingModel.createCollection();
     await WeddingModel.createIndexes();

@@ -72,9 +72,9 @@ The web template sets `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api/v1`. T
 
 The API can start without `MONGODB_URI`; the health endpoint verifies the HTTP application, not database readiness. Setting a URI enables database connection on local startup. Backend environment parsing uses Zod. Optional provider configuration is checked when its integration is used, so blank provider secrets do not prevent local startup.
 
-Keep credentials in ignored local environment files or deployment environment settings. Never place secrets in `NEXT_PUBLIC_*` variables or source control. The scaffold does not send email, upload media, or perform vendor searches.
+Keep credentials in ignored local environment files or deployment environment settings. Never place secrets in `NEXT_PUBLIC_*` variables or source control. The membership email workflow can send through Resend when configured; media uploads and vendor searches remain unimplemented.
 
-R2, Resend, and Google Places currently expose configuration validation only. Provider SDK dependencies and network operations are deferred until their actual feature implementation; Google Places will use native HTTP/fetch unless an SDK becomes necessary.
+R2 and Google Places expose configuration validation only. Resend membership emails use native HTTP with bounded attempts and persisted outcomes; sender-domain verification is still required locally. Provider settings are validated when the integration is used.
 
 ## Run locally
 
@@ -90,9 +90,9 @@ This first builds contracts, then runs the web, API, and contracts compiler watc
 | API         | <http://localhost:4000>               |
 | Health      | <http://localhost:4000/api/v1/health> |
 
-The API implements health, signup, login, current-session lookup, CSRF initialization, and logout. The public homepage uses the approved Stitch design with responsive navigation and clearly labeled illustrative previews. Its planning and sign-in links lead to working signup/login forms. Signup redirects to login with a success notice. Successful login redirects to the homepage (`/`). The optional `/account` page still resolves the current profile and supports sign-out. Wedding setup and dashboard features remain deferred.
+The API implements health, authentication/session routes, wedding onboarding and membership/invitation workflows. The public homepage uses the approved Stitch design with responsive navigation and clearly labeled illustrative previews. Signup redirects to login with a success notice; ordinary login returns home. Invitation-specific login/signup safely returns to the invite for explicit acceptance. Open My Weddings to create/select a wedding, edit its details, or open Family & Team. Full planning dashboard aggregates remain deferred.
 
-The browser API client includes credentials for future HTTP-only session cookies. It has no JWT handling and does not store authentication tokens in browser storage. Session authentication now validates hashed tokens, expiry, revocation, and active account status. Wedding-access middleware remains a fail-closed placeholder until membership authorization is implemented.
+The browser API client includes credentials for HTTP-only session cookies. It has no JWT handling and does not store authentication tokens in browser storage. Session authentication validates hashed tokens, expiry, revocation, and active account status. Wedding and membership services enforce real authorization; the old fail-closed wedding-access middleware remains unused.
 
 ## Commands
 
@@ -118,9 +118,9 @@ Read [`AGENTS.md`](AGENTS.md) before changing domain behavior. Approved source d
 
 Wedding is the tenant boundary. Future persistence must enforce `weddingId` and same-wedding references. The V1 uses revocable opaque sessions, family-level guest groups, event-specific family RSVP, integer paise for money, and R2 for compressed images and thumbnails. Shared contracts must stay independent of Mongoose, Express, and Next.js.
 
-Users, sessions, weddings, wedding memberships, unpublished website settings, and audit records have concrete schemas. Wedding creation/list/read and Admin-only detail updates are implemented with scoped membership checks and transactional creation. Family invitations/permission mutations, password recovery, RSVP, provider operations, media, published websites, reminders and platform administration remain pending. See [`docs/WEDDING_ONBOARDING.md`](docs/WEDDING_ONBOARDING.md) for the current slice and verification.
+Users, sessions, weddings, wedding memberships/invites, email deliveries, unpublished website settings, and audit records have concrete schemas. Wedding onboarding and Family & Team implement scoped reads, transactional creation, secure invitations/acceptance, Admin-only role/permission changes, and concurrent last-Admin protection. Password recovery, events/tasks, guest RSVP, media, published websites, reminders and platform administration remain pending. See [`docs/WEDDING_ONBOARDING.md`](docs/WEDDING_ONBOARDING.md) and [`docs/FAMILY_TEAM.md`](docs/FAMILY_TEAM.md) for scope and verification. Resend membership email sending is implemented; the authorized real test was rejected because the configured sender domain is not verified.
 
-`apps/web` and `apps/api` are intended to become separate Vercel projects. Deployment configuration and Vercel Cron setup are deferred; this phase does not deploy either application or connect real services.
+`apps/web` and `apps/api` are intended to become separate Vercel projects. Deployment configuration and Vercel Cron setup remain deferred. The local API connects to development Atlas and can call Resend for membership emails; no production deployment has been performed.
 
 ## Authentication development
 

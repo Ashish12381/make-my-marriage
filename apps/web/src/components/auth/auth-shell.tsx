@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { UserIdentity } from './user-identity';
 
 export function AuthHeart({ small = false }: { small?: boolean }) {
   return (
@@ -22,9 +23,12 @@ export function AuthShell({ children }: { children: ReactNode }) {
             <AuthHeart small />
             <span>Make My Marriage</span>
           </Link>
-          <Link href="/" className="auth-back">
-            <span aria-hidden="true">←</span> Back to Home
-          </Link>
+          <div className="flex min-w-0 items-center gap-3 sm:gap-6">
+            <UserIdentity />
+            <Link href="/" className="auth-back">
+              <span aria-hidden="true">←</span> Back to Home
+            </Link>
+          </div>
         </div>
       </header>
       <main id="auth-content" className="auth-main">

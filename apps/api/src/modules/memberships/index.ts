@@ -4,4 +4,5 @@ export {
   createInitialWeddingAdmin,
   listActiveWeddingMemberships,
   requireWeddingMembership,
+  requireWeddingFeature,
 } from './memberships.service.js';

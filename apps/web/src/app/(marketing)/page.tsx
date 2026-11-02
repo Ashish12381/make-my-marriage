@@ -21,14 +21,15 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const signedIn = Boolean(await getServerUser());
+  const user = await getServerUser();
+  const signedIn = Boolean(user);
   return (
     <div className="landing-page bg-oat-milk text-espresso antialiased">
       <LandingSessionSync />
       <a className="landing-skip-link" href="#main-content">
         Skip to content
       </a>
-      <LandingHeader signedIn={signedIn} />
+      <LandingHeader signedIn={signedIn} user={user} />
       <main id="main-content" className="pt-20">
         <HeroSection signedIn={signedIn} />
         <FeaturesSection />

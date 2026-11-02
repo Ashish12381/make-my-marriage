@@ -8,6 +8,10 @@ import LoginPage from '../src/app/(auth)/login/page';
 import SignupPage from '../src/app/(auth)/signup/page';
 import AccountPage from '../src/app/(auth)/account/page';
 import { HeroSection } from '../src/components/landing/hero-section';
+import { getInvitationEmail } from '../src/lib/auth/invitation-email';
+import { organizerPermissionsSchema } from '@make-my-marriage/contracts';
+import { UserIdentity } from '../src/components/auth/user-identity';
+import { WeddingShell } from '../src/components/weddings/wedding-shell';
 
 vi.mock('next/headers', () => ({ cookies: vi.fn() }));
 vi.mock('next/navigation', () => ({
@@ -70,6 +74,80 @@ describe('server session resolution', () => {
 });
 
 describe('authentication navigation', () => {
+  it('shows the signed-in name and email linked to My Account in the homepage navbar', () => {
+    const html = renderToStaticMarkup(<LandingHeader signedIn user={user} />);
+    expect(html).toContain('Signed in as Test User, test@example.com. My Account');
+    expect(html).toContain('href="/account"');
+    expect(html).toContain('>Test User</span>');
+    expect(html).toContain('>test@example.com</span>');
+  });
+  it('shows the same account identity in the wedding navbar', () => {
+    const html = renderToStaticMarkup(<WeddingShell user={user}>Workspace</WeddingShell>);
+    expect(html).toContain('Signed in as Test User, test@example.com. My Account');
+    expect(html).toContain('>Test User</span>');
+    expect(html).toContain('Sign Out');
+  });
+  it('does not show an identity for a signed-out visitor', () => {
+    expect(renderToStaticMarkup(<UserIdentity />)).toBe('');
+    const html = renderToStaticMarkup(<LandingHeader signedIn={false} />);
+    expect(html).not.toContain('Signed in as');
+    expect(html).toContain('Sign In');
+  });
+  const invitationPath = `/invite/member/${'t'.repeat(43)}`;
+  it('prefills both auth pages from the validated invitation, including login after signup', async () => {
+    fetchMock.mockImplementation(async () =>
+      Response.json({
+        success: true,
+        data: {
+          weddingId: 'a'.repeat(24),
+          title: 'A & B',
+          role: 'WEDDING_ADMIN',
+          permissions: organizerPermissionsSchema.parse({}),
+          expiresAt: '2027-01-01T00:00:00.000Z',
+          invitedEmail: 'parent@example.com',
+          accountExists: true,
+        },
+      }),
+    );
+    await expect(
+      LoginPage({ searchParams: Promise.resolve({ next: invitationPath, registered: '1' }) }),
+    ).resolves.toMatchObject({
+      props: { initialEmail: 'parent@example.com', returnTo: invitationPath, accountCreated: true },
+    });
+    await expect(
+      SignupPage({ searchParams: Promise.resolve({ next: invitationPath }) }),
+    ).resolves.toMatchObject({
+      props: { initialEmail: 'parent@example.com', returnTo: invitationPath },
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/membership-invites/'),
+      expect.objectContaining({ cache: 'no-store', redirect: 'error' }),
+    );
+  });
+  it('does not look up an invitation for ordinary or untrusted auth continuations', async () => {
+    for (const path of [
+      '/',
+      'https://evil.example/invite/member/token',
+      `${invitationPath}?email=wrong@example.com`,
+    ])
+      expect(await getInvitationEmail(path)).toBe('');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it.each([409, 410, 503])(
+    'keeps auth available without prefill when invitation lookup returns %s',
+    async (status) => {
+      fetchMock.mockResolvedValue(new Response(null, { status }));
+      expect(await getInvitationEmail(invitationPath)).toBe('');
+    },
+  );
+  it('does not prefill from malformed data or a failed invitation lookup', async () => {
+    fetchMock.mockResolvedValueOnce(
+      Response.json({ success: true, data: { invitedEmail: 'wrong@example.com' } }),
+    );
+    expect(await getInvitationEmail(invitationPath)).toBe('');
+    fetchMock.mockRejectedValueOnce(new Error('Network unavailable'));
+    expect(await getInvitationEmail(invitationPath)).toBe('');
+  });
   it('links signed-in visitors directly to their weddings instead of signup', () => {
     const html = renderToStaticMarkup(<HeroSection signedIn />);
     expect(html).toContain('href="/weddings"');

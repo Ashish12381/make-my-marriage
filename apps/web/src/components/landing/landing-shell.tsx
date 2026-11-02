@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { MobileNavigation } from './mobile-navigation';
 import { SignOutButton } from '../auth/sign-out-button';
+import { UserIdentity } from '../auth/user-identity';
+import type { AuthUser } from '@make-my-marriage/contracts';
 
 const navigation = [
   { label: 'Features', href: '#features' },
@@ -12,7 +14,7 @@ function Brand() {
   return (
     <Link
       href="/"
-      className="flex shrink-0 items-center gap-2.5 font-heading text-lg font-bold tracking-tight sm:text-xl"
+      className="flex shrink-0 items-center gap-2.5 font-heading text-lg font-bold tracking-tight max-sm:max-w-[140px] max-sm:gap-1.5 max-sm:text-sm sm:text-xl"
       aria-label="Make My Marriage home"
     >
       <span className="relative flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
@@ -26,7 +28,7 @@ function Brand() {
   );
 }
 
-export function LandingHeader({ signedIn }: { signedIn: boolean }) {
+export function LandingHeader({ signedIn, user }: { signedIn: boolean; user?: AuthUser | null }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-warm-taupe/70 bg-oat-milk/95 backdrop-blur-xl">
       <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-3 px-4 lg:px-10">
@@ -44,13 +46,14 @@ export function LandingHeader({ signedIn }: { signedIn: boolean }) {
         <div className="flex items-center gap-3 sm:gap-4">
           {signedIn ? (
             <>
+              <UserIdentity initialUser={user ?? null} />
               <Link
                 href="/weddings"
-                className="hidden rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-hover sm:block"
+                className="hidden rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white hover:bg-primary-hover lg:block"
               >
                 My Weddings
               </Link>
-              <SignOutButton className="hidden px-2 py-3 text-sm font-semibold text-muted sm:block" />
+              <SignOutButton className="hidden px-2 py-3 text-sm font-semibold text-muted lg:block" />
             </>
           ) : (
             <>

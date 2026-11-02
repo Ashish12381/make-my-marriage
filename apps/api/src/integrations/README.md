@@ -7,7 +7,7 @@ requests and never include credential values in configuration errors.
 - R2: compressed main images and thumbnails; MongoDB holds metadata/object keys only.
   Add S3 client/presigning dependencies with the actual upload implementation.
 - Resend: bounded email batches backed by the email module's delivery records.
-  Add the Resend SDK with delivery implementation.
+  The email module implements one bounded membership email per request via native fetch, with provider idempotency keys and persisted outcomes. No SDK is required.
 - Google Places: server-side discovery via native fetch; persist only wedding selections.
 
-No provider operation, upload signing, email sending, or vendor search is implemented.
+Upload signing and vendor search remain pending. Membership email sending is implemented; real delivery currently requires resolving the configured sender's domain-verification failure. Provider secrets remain backend-only and are validated when used.
