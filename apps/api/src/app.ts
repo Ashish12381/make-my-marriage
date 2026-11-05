@@ -1,7 +1,7 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
-import * as helmet from 'helmet';
+import helmet from 'helmet';
 import { randomUUID } from 'node:crypto';
 import { authRouter } from './modules/auth/index.js';
 import { weddingsRouter } from './modules/weddings/index.js';
@@ -19,7 +19,7 @@ app.use((_request, response, next) => {
   response.setHeader('X-Request-Id', response.locals.requestId as string);
   next();
 });
-app.use(helmet.default());
+app.use(helmet());
 app.use(cors({ origin: new URL(env.WEB_ORIGIN).origin, credentials: true }));
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
