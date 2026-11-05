@@ -40,7 +40,7 @@ make-my-marriage/
 
 ## Prerequisites
 
-- Node.js >=20.19.0 <21.
+- Node.js 24.x.
 - npm 10 or newer.
 - MongoDB is optional for this scaffold. Configure an appropriate MongoDB Atlas or local URI when implementing or exercising persistence.
 
@@ -110,7 +110,7 @@ Run these from the repository root:
 | `npm run format`       | Apply Prettier formatting                                                 |
 | `npm run format:check` | Check formatting without changing files                                   |
 
-CI uses Node.js 20.19.6, installs dependencies with `npm ci`, and runs formatting checks, lint, type checking, tests, and builds on pushes and pull requests.
+CI uses Node.js 24, installs dependencies with `npm ci`, and runs formatting checks, lint, type checking, tests, and builds on pushes and pull requests.
 
 ## Development boundaries
 
@@ -120,7 +120,25 @@ Wedding is the tenant boundary. Future persistence must enforce `weddingId` and 
 
 Users, sessions, weddings, wedding memberships/invites, email deliveries, unpublished website settings, and audit records have concrete schemas. Wedding onboarding and Family & Team implement scoped reads, transactional creation, secure invitations/acceptance, Admin-only role/permission changes, and concurrent last-Admin protection. Password recovery, events/tasks, guest RSVP, media, published websites, reminders and platform administration remain pending. See [`docs/WEDDING_ONBOARDING.md`](docs/WEDDING_ONBOARDING.md) and [`docs/FAMILY_TEAM.md`](docs/FAMILY_TEAM.md) for scope and verification. Resend membership email sending is implemented; the authorized real test was rejected because the configured sender domain is not verified.
 
-`apps/web` and `apps/api` are intended to become separate Vercel projects. Deployment configuration and Vercel Cron setup remain deferred. The local API connects to development Atlas and can call Resend for membership emails; no production deployment has been performed.
+## Vercel demo
+
+1. Push the deployment changes to the branch you want to demo. Import the same repository into two Vercel projects. Set the Production Branch to that branch for both projects. The current application branch is `dev`.
+2. Set the API project to **Express** with root directory `apps/api`. Set the web project to **Next.js** with root directory `apps/web`. Use Node.js 24 for both and enable **Include source files outside of the Root Directory in the Build Step** so both can build the shared contracts. Keep automatic install and output directory settings. Override the Build Command in both projects with `npm --prefix ../.. run build:contracts && npm run build`.
+3. Prepare a separate Atlas demo database and a database user scoped to it. In Atlas, allow connections from the API deployment's outbound network. Set the API project's Production environment variables below. Use the stable web project domain for `WEB_ORIGIN`.
+4. Deploy the API and check `/api/v1/health` and `/api/v1/auth/csrf` on its stable project domain. Health checks the HTTP process. The CSRF endpoint also checks that auth and Atlas are configured.
+5. Set the web project's Production environment variables below and deploy the web project. Use stable project domains rather than deployment-specific URLs. The web rewrite keeps browser auth and cookies on the web hostname. The API's stable domain must be reachable by that rewrite.
+6. In a private browser window, open the web project domain and check signup, login, the navbar identity, page refresh, My Weddings, wedding creation, Family & Team, and logout. Check the URL in another signed-out window before sharing it.
+
+| Project | Variable                              | Demo value                                                              |
+| ------- | ------------------------------------- | ----------------------------------------------------------------------- |
+| API     | `WEB_ORIGIN`                          | Stable web origin, such as `https://make-my-marriage.vercel.app`        |
+| API     | `MONGODB_URI`                         | Atlas connection string pointing to the demo database                   |
+| API     | `AUTH_SECRET`                         | Fresh random secret of at least 32 characters                           |
+| API     | `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Optional for delivery. Use a verified sender for invitations to friends |
+| Web     | `API_UPSTREAM_ORIGIN`                 | Stable API origin, such as `https://make-my-marriage-api.vercel.app`    |
+| Web     | `NEXT_PUBLIC_API_BASE_URL`            | Stable **web** origin plus `/api/v1`                                    |
+
+Set secrets in the API project settings. To generate a secret locally, run `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Redeploy the affected project after changing its environment variables.
 
 ## Authentication development
 
