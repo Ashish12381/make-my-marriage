@@ -30,6 +30,15 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   WEB_ORIGIN: origin.default('http://localhost:3000'),
+  AUTH_SECRET: optionalString.pipe(z.string().min(32).optional()),
+  SESSION_DAYS: z.coerce.number().int().min(1).max(30).default(7),
+  AUTH_TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(1).default(0),
+  WEDDING_STORAGE_QUOTA_BYTES: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(Number.MAX_SAFE_INTEGER)
+    .default(0),
   MONGODB_URI: optionalString.pipe(
     z
       .string()

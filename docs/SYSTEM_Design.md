@@ -177,7 +177,7 @@ Each backend module owns its routes, controllers, Zod input schemas, services, a
 6. At each request, validate session, membership, wedding ownership, and feature permission.
 7. Password reset remains email-based. Platform Super Admin receives stronger authentication before production (MFA strongly preferred).
 
-**No email verification caveat:** Account email ownership is unproven at signup. **Never** grant an existing wedding membership merely because a registered email matches an invitation. Require possession of the valid, single-use, expiring *membership invitation token*. This is link-based authorization; if an invite link is forwarded, the recipient may redeem it. Wedding Admins can revoke/reissue an unused invitation.
+**No email verification caveat:** Account email ownership is unproven at signup. **Never** grant an existing wedding membership merely because a registered email matches an invitation. Require possession of the valid, single-use, expiring *membership invitation token*. As approved on 2 November 2026, acceptance also requires that the authenticated account's normalized email matches the invited address. A different account cannot consume the token and must switch accounts. This replaces the earlier rule allowing another account to redeem a forwarded membership link; guest-link rules are unchanged. Wedding Admins can revoke/reissue an unused invitation or remove a joined member, preserving the last active Admin.
 
 ### 5.2 Roles
 
@@ -547,3 +547,5 @@ These are external **implementation references**, not hard-coded pricing or capa
 The V1 HLD adopts the final decisions: **two Vercel projects, modular Express monolith, Next.js frontend, Zod, bcrypt, MongoDB Atlas/Mongoose, Resend, Cloudflare R2, browser-compressed high-quality photos only, approved-access-based immediate gallery publication with NO photo approval stage, Cloudflare/Vercel CDN where safe, geo-coordinates for vendors, simple YouTube URLs, and a daily cron without message queues**.
 
 This document is the implementation baseline alongside the finalized PRD. Any subsequent architectural change should be recorded as a small architecture decision record (ADR) rather than silently altering these core decisions.
+
+**Membership preview revision, 2 November 2026:** The validated pending, unexpired membership token also authorizes disclosure of its invited email and account-existence boolean for signup/login guidance. This is not a general account directory endpoint. Lookup uses the auth public interface, returns no user IDs/profile data, and retains private/no-store and no-referrer responses. Acceptance remains a separate authenticated, email-matching, atomic operation.

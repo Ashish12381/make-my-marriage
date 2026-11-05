@@ -7,7 +7,7 @@ const configurationSchema = z.object({
   fromEmail: z.email(),
 });
 
-/** Configuration only; add the Resend client when bounded email delivery exists. */
+/** Validate lazily when the bounded email service is used. */
 export function getResendConfiguration() {
   return parseIntegrationConfiguration('Resend', configurationSchema, {
     apiKey: env.RESEND_API_KEY,

@@ -128,7 +128,7 @@ The requirements below are all in V1 unless expressly marked conditional on a su
 | **Req ID** | **V1 requirement** |
 | --- | --- |
 | **FR-02.01** | Wedding Admins can invite the partner and selected relatives as additional Wedding Admins or Family Organizers via email. |
-| **FR-02.02** | Invitees accept or decline their invitations; repeat invitations do not create duplicate memberships. |
+| **FR-02.02** | Invitees accept or decline their invitations; repeat invitations do not create duplicate memberships. Acceptance requires a valid invitation token and a signed-in account with the invited email address. A different account cannot consume the invitation. |
 | **FR-02.03** | A Wedding Admin can grant/revoke organizer permissions by feature area and assign event-specific responsibilities. |
 | **FR-02.04** | Wedding Admins have equivalent management rights for their own wedding, regardless of bride/groom family designation. |
 | **FR-02.05** | At least one active Wedding Admin must remain; prevent removal or departure of the last admin. |
@@ -138,6 +138,7 @@ The requirements below are all in V1 unless expressly marked conditional on a su
 **MINIMUM ACCEPTANCE CRITERIA**
 
 - An invited parent can accept Wedding Admin access and manage the wedding independently.
+- Revision approved 2 November 2026: acceptance is restricted to the invited email (case-insensitive), in addition to token possession and login. A different account receives a switch-account message and the invite remains pending. Email verification is still not required. Admins can revoke pending invitations or remove joined members; removed members may be invited again without deleting their app accounts or invitation history.
 - An organizer without finance permission cannot read or edit expense or payment endpoints.
 - The application prevents deletion of the wedding's final active Admin.
 
@@ -622,3 +623,5 @@ The V1 **feature scope is final**. The following are technical configuration and
 | **Family Organizer** | A registered collaborator whose access is configured by a Wedding Admin. |
 | **Platform Super Admin** | Privileged operator of Make My Marriage, separate from wedding administration. |
 | **Guest** | A non-registered visitor using a public site or personalized invitation link. |
+
+**Membership invitation UX revision, approved 2 November 2026:** A valid invitation page checks whether the invited email has a registered account and guides the recipient to signup or login accordingly. Only a matching signed-in account sees Accept. A different active browser account is explained with an explicit action to switch into the appropriate signup/login flow; the invitation is retained throughout.

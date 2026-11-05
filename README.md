@@ -1,6 +1,6 @@
 # Make My Marriage
 
-V1 foundation for a collaborative wedding planning application. This repository currently contains a project scaffold: working web routes, an Express health endpoint, shared-package configuration, and development tooling. Product features and the approved page designs will be implemented incrementally from the documents in [`docs/`](docs/).
+V1 foundation for a collaborative wedding planning application. This repository contains the approved Stitch public homepage, scaffold routes, an Express health endpoint, shared-package configuration, and development tooling. Product features are implemented incrementally from the documents in [`docs/`](docs/).
 
 ## Architecture
 
@@ -40,7 +40,7 @@ make-my-marriage/
 
 ## Prerequisites
 
-- Node.js >=20.19.0 <21.
+- Node.js 24.x.
 - npm 10 or newer.
 - MongoDB is optional for this scaffold. Configure an appropriate MongoDB Atlas or local URI when implementing or exercising persistence.
 
@@ -72,9 +72,9 @@ The web template sets `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000/api/v1`. T
 
 The API can start without `MONGODB_URI`; the health endpoint verifies the HTTP application, not database readiness. Setting a URI enables database connection on local startup. Backend environment parsing uses Zod. Optional provider configuration is checked when its integration is used, so blank provider secrets do not prevent local startup.
 
-Keep credentials in ignored local environment files or deployment environment settings. Never place secrets in `NEXT_PUBLIC_*` variables or source control. The scaffold does not send email, upload media, or perform vendor searches.
+Keep credentials in ignored local environment files or deployment environment settings. Never place secrets in `NEXT_PUBLIC_*` variables or source control. The membership email workflow can send through Resend when configured; media uploads and vendor searches remain unimplemented.
 
-R2, Resend, and Google Places currently expose configuration validation only. Provider SDK dependencies and network operations are deferred until their actual feature implementation; Google Places will use native HTTP/fetch unless an SDK becomes necessary.
+R2 and Google Places expose configuration validation only. Resend membership emails use native HTTP with bounded attempts and persisted outcomes; sender-domain verification is still required locally. Provider settings are validated when the integration is used.
 
 ## Run locally
 
@@ -90,9 +90,9 @@ This first builds contracts, then runs the web, API, and contracts compiler watc
 | API         | <http://localhost:4000>               |
 | Health      | <http://localhost:4000/api/v1/health> |
 
-Only the health endpoint implements API behavior in this phase. Business routes and authentication remain placeholders. Web pages contain minimal route placeholders; approved landing, authentication, and dashboard designs are deferred.
+The API implements health, authentication/session routes, wedding onboarding and membership/invitation workflows. The public homepage uses the approved Stitch design with responsive navigation and clearly labeled illustrative previews. Signup redirects to login with a success notice; ordinary login returns home. Invitation-specific login/signup safely returns to the invite for explicit acceptance. Open My Weddings to create/select a wedding, edit its details, or open Family & Team. Full planning dashboard aggregates remain deferred.
 
-The browser API client includes credentials for future HTTP-only session cookies. It has no JWT handling and does not store authentication tokens in browser storage. Authentication and wedding-access middleware are unmounted placeholders that fail closed if invoked; they do not provide working authorization yet.
+The browser API client includes credentials for HTTP-only session cookies. It has no JWT handling and does not store authentication tokens in browser storage. Session authentication validates hashed tokens, expiry, revocation, and active account status. Wedding and membership services enforce real authorization; the old fail-closed wedding-access middleware remains unused.
 
 ## Commands
 
@@ -106,11 +106,11 @@ Run these from the repository root:
 | `npm run build`        | Build contracts before the API and web applications                       |
 | `npm run lint`         | Run ESLint across application and shared code                             |
 | `npm run typecheck`    | Check strict TypeScript types across workspaces                           |
-| `npm run test`         | Run the API test foundation                                               |
+| `npm run test`         | Run API and frontend regression suites; Atlas tests are opt-in            |
 | `npm run format`       | Apply Prettier formatting                                                 |
 | `npm run format:check` | Check formatting without changing files                                   |
 
-CI uses Node.js 20.19.6, installs dependencies with `npm ci`, and runs formatting checks, lint, type checking, tests, and builds on pushes and pull requests.
+CI uses Node.js 24, installs dependencies with `npm ci`, and runs formatting checks, lint, type checking, tests, and builds on pushes and pull requests.
 
 ## Development boundaries
 
@@ -118,6 +118,28 @@ Read [`AGENTS.md`](AGENTS.md) before changing domain behavior. Approved source d
 
 Wedding is the tenant boundary. Future persistence must enforce `weddingId` and same-wedding references. The V1 uses revocable opaque sessions, family-level guest groups, event-specific family RSVP, integer paise for money, and R2 for compressed images and thumbnails. Shared contracts must stay independent of Mongoose, Express, and Next.js.
 
-Authentication, concrete MongoDB schemas, CRUD, RSVP, provider integrations, media flows, wedding websites, reminders, and platform administration are deliberately deferred. Model locations and integration foundations do not imply these features work. Do not add fake product logic to fill placeholders.
+Users, sessions, weddings, wedding memberships/invites, email deliveries, unpublished website settings, and audit records have concrete schemas. Wedding onboarding and Family & Team implement scoped reads, transactional creation, secure invitations/acceptance, Admin-only role/permission changes, and concurrent last-Admin protection. Password recovery, events/tasks, guest RSVP, media, published websites, reminders and platform administration remain pending. See [`docs/WEDDING_ONBOARDING.md`](docs/WEDDING_ONBOARDING.md) and [`docs/FAMILY_TEAM.md`](docs/FAMILY_TEAM.md) for scope and verification. Resend membership email sending is implemented; the authorized real test was rejected because the configured sender domain is not verified.
 
-`apps/web` and `apps/api` are intended to become separate Vercel projects. Deployment configuration and Vercel Cron setup are deferred; this phase does not deploy either application or connect real services.
+## Vercel demo
+
+1. Push the deployment changes to the branch you want to demo. Import the same repository into two Vercel projects. Set the Production Branch to that branch for both projects. The current application branch is `dev`.
+2. Set the API project to **Express** with root directory `apps/api`. Set the web project to **Next.js** with root directory `apps/web`. Use Node.js 24 for both and enable **Include source files outside of the Root Directory in the Build Step** so both can build the shared contracts. Keep automatic install and output directory settings. Override the Build Command in both projects with `npm --prefix ../.. run build:contracts && npm run build`.
+3. Prepare a separate Atlas demo database and a database user scoped to it. In Atlas, allow connections from the API deployment's outbound network. Set the API project's Production environment variables below. Use the stable web project domain for `WEB_ORIGIN`.
+4. Deploy the API and check `/api/v1/health` and `/api/v1/auth/csrf` on its stable project domain. Health checks the HTTP process. The CSRF endpoint also checks that auth and Atlas are configured.
+5. Set the web project's Production environment variables below and deploy the web project. Use stable project domains rather than deployment-specific URLs. The web rewrite keeps browser auth and cookies on the web hostname. The API's stable domain must be reachable by that rewrite.
+6. In a private browser window, open the web project domain and check signup, login, the navbar identity, page refresh, My Weddings, wedding creation, Family & Team, and logout. Check the URL in another signed-out window before sharing it.
+
+| Project | Variable                              | Demo value                                                              |
+| ------- | ------------------------------------- | ----------------------------------------------------------------------- |
+| API     | `WEB_ORIGIN`                          | Stable web origin, such as `https://make-my-marriage.vercel.app`        |
+| API     | `MONGODB_URI`                         | Atlas connection string pointing to the demo database                   |
+| API     | `AUTH_SECRET`                         | Fresh random secret of at least 32 characters                           |
+| API     | `RESEND_API_KEY`, `RESEND_FROM_EMAIL` | Optional for delivery. Use a verified sender for invitations to friends |
+| Web     | `API_UPSTREAM_ORIGIN`                 | Stable API origin, such as `https://make-my-marriage-api.vercel.app`    |
+| Web     | `NEXT_PUBLIC_API_BASE_URL`            | Stable **web** origin plus `/api/v1`                                    |
+
+Set secrets in the API project settings. To generate a secret locally, run `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Redeploy the affected project after changing its environment variables.
+
+## Authentication development
+
+See [`docs/AUTH_SETUP.md`](docs/AUTH_SETUP.md) for Atlas configuration, session/CSRF behavior, live test instructions, and current boundaries. `MONGODB_URI` and a random `AUTH_SECRET` of at least 32 characters belong in ignored `apps/api/.env`. Auth routes return a safe 503 if configuration is absent; the health endpoint remains available.

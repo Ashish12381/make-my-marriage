@@ -1,5 +1,10 @@
 # Working instructions for Make My Marriage
 
+## Reusable manual QA account
+
+- For future manual QA, reuse the dedicated account recorded in the ignored root `.env.qa.local`; do not create another QA account on each run.
+- Read `docs/MANUAL_QA.md` for the account reference, retained synthetic weddings, and latest browser findings. Never copy its password into tracked files or reports.
+
 Make My Marriage is a collaborative wedding planning SaaS. This repository contains the V1 project foundation. Implement approved requirements incrementally; preserve existing user files and the documents in `docs/`. Read the relevant PRD, system design, database design, and API design before implementing a feature. Explicit current task instructions take precedence when documents disagree; flag material discrepancies instead of inventing a resolution or a new feature.
 
 ## Architecture and ownership

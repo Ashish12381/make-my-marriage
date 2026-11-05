@@ -255,6 +255,8 @@ All paths in this and subsequent tables are relative to `/api/v1`.
 
 Server sets `createdBy`, all storage counters, `guestAccessExpiryMode=DEFAULT`, the default guest-access date, and the first membership. `slug` is unique (`409 SLUG_TAKEN`). Do **not** accept a budget field. If no event exists, use the wedding's local `weddingDate` to compute expiry; recompute the default when later events are added/changed.
 
+As requested on 29 October 2026, creation also returns `409 DUPLICATE_WEDDING` when the same creator already has a non-deleted wedding for the same normalized full-name pair, regardless of title, date or slug. Case, whitespace, Unicode composition and name order do not distinguish couples. Edits cannot introduce a duplicate under the wedding's original creator. This is account-scoped, not a global identity check. Multiple distinct weddings remain allowed with no configured per-user count limit. `coupleKey` is server-owned and must not be accepted in request bodies.
+
 **Guest-access settings request**:
 
 ```json
@@ -278,8 +280,8 @@ Validate `expiresAt` falls **after** the final event's end-of-day in the wedding
 | `POST` | `/weddings/:weddingId/membership-invites` | Admin | Create single-use signed invite for Wedding Admin/Organizer; optionally send via Resend |
 | `GET` | `/weddings/:weddingId/membership-invites` | Admin | Show pending/accepted/revoked invitations; never return raw tokens |
 | `POST` | `/weddings/:weddingId/membership-invites/:inviteId/revoke` | Admin | Revoke pending invite |
-| `GET` | `/membership-invites/:token/preview` | Public | Show minimal wedding, role and expiry; `Cache-Control: no-store` |
-| `POST` | `/membership-invites/:token/accept` | Member | Accept possession-based invite; no email verification |
+| `GET` | `/membership-invites/:token/preview` | Public | Show wedding, role, expiry, invited email and account-existence guidance after token validation; `Cache-Control: no-store` |
+| `POST` | `/membership-invites/:token/accept` | Member | Valid token plus account with invited email required; no email verification |
 | `POST` | `/membership-invites/:token/decline` | Public or Member | Mark pending invite declined, requiring possession of valid token |
 | `PATCH` | `/weddings/:weddingId/members/:membershipId` | Admin | Change role or feature permissions |
 | `DELETE` | `/weddings/:weddingId/members/:membershipId` | Admin | Revoke membership, retaining history |
@@ -301,11 +303,13 @@ Validate `expiresAt` falls **after** the final event's end-of-day in the wedding
 }
 ```
 
-Only known permission keys are allowed; unspecified Organizer flags default to `false`. A Wedding Admin role grants full wedding administration regardless of per-flag values. Membership acceptance requires login/signup but **not** email verification. The valid invite token is the possession proof. Consuming the invite and activating/upserting the unique `(weddingId,userId)` membership must be atomic; a reused invite returns `409 INVITE_ALREADY_USED`. Prevent concurrent removal of the last active Wedding Admin (`409 LAST_WEDDING_ADMIN`). Use expiry and one-use checks even when the invited address matches the user's unverified signup email; email-text equality alone cannot grant access.
+Only known permission keys are allowed; unspecified Organizer flags default to `false`. A Wedding Admin role grants full wedding administration regardless of per-flag values. Membership acceptance requires login/signup but **not** email verification. The valid invite token is the possession proof. As approved on 2 November 2026, the authenticated account's normalized email must also match the invited email; otherwise return `403 INVITE_EMAIL_MISMATCH` without consuming the invitation. An already-active matching member returns `409 ALREADY_A_MEMBER`, also preserving the invite. Consuming the invite and activating/upserting the unique `(weddingId,userId)` membership must be atomic; a reused invite returns `409 INVITE_ALREADY_USED`. Prevent concurrent removal of the last active Wedding Admin (`409 LAST_WEDDING_ADMIN`). Use expiry and one-use checks even when the invited address matches the user's unverified signup email; email-text equality alone cannot grant access. Accepted history does not prevent a new invite after membership removal; only active membership or an unexpired pending invitation blocks creation.
 
 ---
 
 ## 6. Events and embedded YouTube livestreams
+
+Implementation update, 2 November 2026: the membership routes in section 5 are mounted. Invitations expire in seven days, are limited to 20 creations per wedding per rolling hour, and automatically attempt one bounded Resend send after commit. Create returns the invite DTO and `emailStatus`; history includes persisted `emailStatus` separately from invitation status. SENT means provider acceptance, not delivery. No raw tokens are returned to the inviting browser. Public preview returns `invitedEmail` and `accountExists` only for a valid pending, unexpired token; it accepts no arbitrary email lookup parameter; acceptance requires possession plus an active session with the invited normalized email. The reserved database `members` flag is never accepted for Organizers: all membership mutations remain Admin-only. Only nine planning-area permission keys are exposed. See FAMILY_TEAM.md for scope and current email-delivery limits.
 
 | Method | Route | Auth | Contract / purpose |
 |---|---|---|---|
