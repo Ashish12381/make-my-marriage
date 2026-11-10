@@ -61,6 +61,7 @@ describe('wedding overview refresh recovery', () => {
       unavailable: true,
       error: 'Access rejected',
     });
+    expect(weddingOverviewReducer(failed, { type: 'saved', wedding })).toEqual(failed);
   });
   it('closes the editor if a refresh returns reduced Organizer permissions', () => {
     const state = weddingOverviewReducer(editing, {

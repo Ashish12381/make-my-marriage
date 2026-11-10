@@ -43,6 +43,7 @@ export function weddingOverviewReducer(
     case 'close':
       return { ...state, editing: false };
     case 'saved':
+      if (state.unavailable) return state;
       return { wedding: action.wedding, editing: false, unavailable: false, error: '' };
   }
 }

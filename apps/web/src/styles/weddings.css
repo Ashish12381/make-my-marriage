@@ -458,50 +458,518 @@
   color: var(--planner-primary);
   font-weight: 600;
 }
-.wedding-overview-heading {
-  padding: 36px;
+.wedding-app:has(.wedding-dashboard) > :is(.wedding-header, .wedding-footer) {
+  display: none;
+}
+.wedding-dashboard-page > .wedding-alert {
+  margin: 16px;
+}
+.wedding-dashboard {
+  --dashboard-surface: #fffdfc;
+  --dashboard-border: #e9ddd3;
+  --dashboard-accent: #9c3e15;
+  --dashboard-shadow: 0 2px 4px #50321c06, 0 10px 26px -16px #50321c26;
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  min-height: 100dvh;
+  background: #faf7f3;
+}
+.wedding-dashboard-sidebar {
+  background: var(--dashboard-surface);
+  border-inline-end: 1px solid var(--dashboard-border);
+}
+.wedding-dashboard-brand,
+.wedding-dashboard-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 32px;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 20px;
+  background: var(--dashboard-surface);
+  border-bottom: 1px solid var(--dashboard-border);
 }
-.wedding-overview-heading h1 {
-  margin-bottom: 14px;
-}
-.wedding-countdown {
-  min-width: 240px;
+.wedding-dashboard-brand a {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  gap: 10px;
+  line-height: 1.2;
+}
+.wedding-dashboard-brand a > span,
+.wedding-dashboard-monogram {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--brand-primary-hover);
+  color: white;
+}
+.wedding-dashboard-brand small {
+  display: block;
+  margin-top: 4px;
+  color: var(--dashboard-accent);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.wedding-dashboard-navigation {
+  display: none;
+}
+.wedding-dashboard-nav {
+  display: grid;
+  gap: 14px;
+  padding: 12px;
+}
+.wedding-dashboard-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: var(--brand-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.wedding-dashboard-nav-group > p,
+.wedding-dashboard-metrics dt,
+.wedding-dashboard-totals dt,
+.wedding-dashboard-subheading {
+  color: var(--brand-muted);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+.wedding-dashboard-nav-group > p {
+  padding: 6px 12px;
+}
+.wedding-dashboard-nav-group li > :is(a, button, span) {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  min-height: 40px;
+  padding: 7px 12px;
+  border-radius: 9px;
+  color: var(--brand-muted);
+  font-size: 14px;
+  text-align: left;
+}
+.wedding-dashboard-nav-group svg {
+  flex: none;
+}
+.wedding-dashboard-nav-group small {
+  margin-inline-start: auto;
+  padding: 1px 6px;
+  border-radius: 99px;
+  background: #f3ebe4;
+  color: var(--brand-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.wedding-dashboard-nav-group a:hover,
+.wedding-dashboard-nav-group button:hover,
+.wedding-dashboard-switch:hover,
+.wedding-dashboard-nav-group a[aria-current='page'] {
+  color: var(--dashboard-accent);
+  background: #faece5;
+}
+.wedding-dashboard-nav-group a[aria-current='page'] {
+  font-weight: 800;
+  box-shadow: inset 3px 0 var(--dashboard-accent);
+}
+.wedding-dashboard-account {
+  display: grid;
+  gap: 4px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: var(--brand-oat-milk);
+}
+.wedding-dashboard-toolbar {
+  min-height: 64px;
+  flex-wrap: wrap;
+  padding-inline: clamp(16px, 2.5vw, 32px);
+}
+.wedding-dashboard-toolbar > strong {
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+.wedding-dashboard-toolbar .wedding-button {
+  margin-inline-start: auto;
+}
+.wedding-dashboard-body {
+  display: grid;
+  gap: 20px;
+  width: min(100%, 1440px);
+  margin-inline: auto;
+  padding: clamp(16px, 2.5vw, 36px);
+}
+.wedding-dashboard-note {
+  color: var(--brand-muted);
+  font-size: 12px;
+}
+.wedding-dashboard .wedding-card {
+  background: var(--dashboard-surface);
+  border-color: var(--dashboard-border);
+  border-radius: 18px;
+  box-shadow: var(--dashboard-shadow);
+}
+.wedding-dashboard .wedding-dashboard-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(14px, 2vw, 24px);
+  padding: clamp(18px, 2.8vw, 36px);
+  border-radius: 24px;
+  background:
+    radial-gradient(ellipse at 98% 0%, #eec6af85, transparent 55%),
+    linear-gradient(116deg, #fff9f4, #faece1);
+}
+.wedding-dashboard-monogram {
+  width: clamp(54px, 6vw, 74px);
+  height: clamp(54px, 6vw, 74px);
+  border-radius: 20px;
+  background: linear-gradient(145deg, #b95025, #8d3517);
+  box-shadow: 0 8px 16px #8d35172b;
+  font-size: 22px;
+  font-weight: 800;
+}
+.wedding-dashboard-identity {
+  flex: 1 1 210px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.wedding-dashboard-identity h1 {
+  margin-bottom: 8px;
+  font-size: clamp(26px, 3vw, 46px);
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.wedding-dashboard-identity p {
+  color: var(--brand-muted);
+  font-size: 14px;
+}
+.wedding-dashboard-countdown {
+  display: inline-block;
+  margin-bottom: 6px;
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: #f4dfd2;
+  color: var(--dashboard-accent);
+  font-size: 12px;
+  font-weight: 750;
+}
+.wedding-dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wedding-dashboard-actions .wedding-button {
+  padding-inline: 12px;
+}
+.wedding-dashboard-actions .wedding-button-secondary {
+  background: #fffdfcbf;
+  border-color: var(--dashboard-border);
+}
+.wedding-dashboard-actions .wedding-button-secondary:hover {
+  background: #fffdfc;
+}
+.wedding-dashboard-metrics,
+.wedding-dashboard-columns {
+  display: grid;
   gap: 16px;
-  padding: 24px;
-  background: var(--planner-soft);
-  border-radius: 14px;
+  min-width: 0;
+}
+.wedding-dashboard-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(min(134px, 100%), 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.wedding-dashboard-metrics > div {
+  padding: 12px 14px;
+  box-shadow: none;
+}
+.wedding-dashboard-metrics dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  line-height: 1.3;
+}
+.wedding-dashboard-metric-icon,
+.wedding-dashboard-panel-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: #f6ece4;
+  color: var(--dashboard-accent);
+}
+.wedding-dashboard-metrics dd {
+  margin: 6px 0 0;
+  font-size: clamp(20px, 1.8vw, 28px);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+  line-height: 1.3;
+}
+.wedding-dashboard-metrics [data-attention='true'] dd {
+  color: var(--dashboard-accent);
+}
+.wedding-dashboard-metrics dd small {
+  display: block;
+  margin-top: 3px;
+  color: var(--brand-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: normal;
+}
+.wedding-dashboard-columns {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+}
+.wedding-dashboard-panel {
+  min-width: 0;
+  padding: clamp(16px, 2vw, 24px);
+  scroll-margin-top: 16px;
+}
+.wedding-dashboard-panel-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--dashboard-border);
+}
+.wedding-dashboard-panel-heading > div {
+  flex: 1 1 130px;
+}
+.wedding-dashboard-panel-heading h2 {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+.wedding-dashboard-panel-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+}
+:is(#dashboard-events, #dashboard-tasks) .wedding-dashboard-panel-icon {
+  background: #f4dfd2;
+}
+:is(#dashboard-events, #dashboard-tasks) .wedding-dashboard-panel-heading h2 {
+  font-size: clamp(18px, 1.7vw, 23px);
+}
+.wedding-dashboard-panel p,
+.wedding-dashboard-list li > span {
+  color: var(--brand-muted);
+  font-size: 13px;
+}
+.wedding-dashboard-panel .wedding-url {
+  color: var(--dashboard-accent);
+}
+.wedding-dashboard-list {
+  display: grid;
+  gap: 10px;
+}
+.wedding-dashboard-roster {
+  margin-top: 10px;
+}
+.wedding-dashboard-roster li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wedding-dashboard-roster .wedding-dashboard-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #faece5;
+  color: var(--dashboard-accent);
+  font-weight: 800;
+}
+.wedding-dashboard-list li {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #faf5f0;
+  font-size: 14px;
+}
+.wedding-dashboard-list .wedding-dashboard-event,
+.wedding-dashboard-list .wedding-dashboard-rsvp,
+.wedding-dashboard-rows li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.wedding-dashboard-list .wedding-dashboard-rsvp,
+.wedding-dashboard-rows li {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.wedding-dashboard-list li > .wedding-dashboard-date {
+  display: grid;
+  place-content: center;
+  flex: none;
+  width: 49px;
+  min-height: 53px;
+  border-radius: 10px;
+  background: #fff0bc;
+  color: #79430d;
+  text-align: center;
+  line-height: 1.3;
+}
+.wedding-dashboard-date strong {
+  font-size: 17px;
+}
+.wedding-dashboard-date small {
+  text-transform: uppercase;
+  font-weight: 800;
+}
+.wedding-dashboard-event:nth-child(2n) > .wedding-dashboard-date {
+  background: #d0f7e6;
+  color: #175746;
+}
+.wedding-dashboard-event:nth-child(3n) > .wedding-dashboard-date {
+  background: #fce2e8;
+  color: #873047;
+}
+.wedding-dashboard-event-status {
+  display: inline-block;
+  border-radius: 99px;
+  padding: 1px 7px;
+  background: #d0f7e6;
+  color: #175746;
+  font-size: 11px;
+  font-weight: 750;
+}
+.wedding-dashboard-rows li,
+.wedding-dashboard-activity li {
+  border-color: var(--dashboard-border);
+  border-width: 0 0 1px;
+  border-radius: 0;
+  padding-inline: 0;
+  background: transparent;
+}
+.wedding-dashboard-activity li {
+  padding-inline-start: 14px;
+  position: relative;
+}
+.wedding-dashboard-activity li::before {
+  content: '';
+  position: absolute;
+  inset: 17px auto auto 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+}
+.wedding-dashboard-totals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.wedding-dashboard-totals div {
+  padding: 8px;
+  border-radius: 10px;
+  background: #faf5f0;
   text-align: center;
 }
-.wedding-countdown > span {
-  font-size: 32px;
-  color: var(--planner-primary);
+.wedding-dashboard-totals dd {
+  margin: 2px 0 0;
+  font-size: clamp(13px, 1.4vw, 20px);
+  font-weight: 800;
 }
-.wedding-countdown strong {
-  font-size: 22px;
-  color: var(--planner-primary);
+.wedding-dashboard-panel .wedding-dashboard-subheading {
+  margin: 12px 0 8px;
+  font-size: 11px;
 }
-.wedding-details {
-  padding: 32px;
-  margin-top: 28px;
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes wedding-dashboard-enter {
+    from {
+      opacity: 0.65;
+      transform: translateY(6px);
+    }
+  }
+  .wedding-dashboard-hero,
+  .wedding-dashboard-metrics > div,
+  .wedding-dashboard-columns > section {
+    animation: wedding-dashboard-enter 260ms ease-out backwards;
+  }
+  .wedding-dashboard-metrics > :nth-child(even),
+  .wedding-dashboard-columns > :nth-child(even) {
+    animation-delay: 45ms;
+  }
+  .wedding-dashboard :is(.wedding-button, .wedding-dashboard-switch),
+  .wedding-dashboard-nav-group :is(a, button),
+  .wedding-dashboard-navigation span {
+    transition:
+      background-color 160ms ease,
+      color 160ms ease,
+      transform 160ms ease,
+      box-shadow 160ms ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .wedding-dashboard .wedding-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 12px #50321c1f;
+    }
+  }
 }
-.wedding-details h2 {
-  margin-bottom: 24px;
+@media (max-width: 950px) {
+  .wedding-dashboard {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+  .wedding-dashboard-sidebar {
+    border-inline-end: 0;
+  }
+  .wedding-dashboard-brand {
+    justify-content: space-between;
+  }
+  .wedding-dashboard-navigation {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 10px;
+    font-weight: 750;
+  }
+  .wedding-dashboard-navigation[aria-expanded='true'] span {
+    transform: rotate(180deg);
+  }
+  .wedding-dashboard-nav[data-open='false'] {
+    display: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .wedding-dashboard-nav[data-open='true'] {
+      animation: wedding-dashboard-enter 180ms ease-out;
+    }
+  }
 }
-.wedding-reserved {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-  margin-top: 28px;
-  padding-top: 24px;
-  border-top: 1px solid #eee1db;
+@media (max-width: 660px) {
+  .wedding-dashboard-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .wedding-dashboard-body {
+    gap: 16px;
+  }
+  .wedding-dashboard-actions {
+    flex-basis: 100%;
+  }
+  .wedding-dashboard-toolbar .wedding-button {
+    margin-inline-start: 0;
+  }
 }
 .wedding-ready {
   padding: 40px;
@@ -649,21 +1117,6 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 6px;
-  }
-  .wedding-overview-heading {
-    padding: 24px;
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .wedding-countdown {
-    min-width: 0;
-  }
-  .wedding-details {
-    padding: 24px;
-  }
-  .wedding-reserved {
-    align-items: flex-start;
-    flex-direction: column;
   }
   .wedding-breadcrumb {
     align-items: flex-start;

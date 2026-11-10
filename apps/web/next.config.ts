@@ -4,6 +4,16 @@ const nextConfig: NextConfig = {
   // Keep repository-wide guidance in the root AGENTS.md.
   agentRules: false,
   reactStrictMode: true,
+  async redirects() {
+    return [
+      {
+        source: '/:path*',
+        has: [{ type: 'host', value: String.raw`make-my-marriage-nine-rho\.vercel\.app` }],
+        destination: 'https://planyourwedding.online/:path*',
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     const upstream = process.env.API_UPSTREAM_ORIGIN;
     if (!upstream) return [];
