@@ -14,6 +14,10 @@ import { WeddingMembership } from '../src/modules/memberships/models/wedding-mem
 import { WebsiteSettings } from '../src/modules/website/models/website-settings.model.js';
 import { websiteRepository } from '../src/modules/website/website.repository.js';
 import { AuditLog } from '../src/modules/audit/models/audit-log.model.js';
+import { EventModel } from '../src/modules/events/models/event.model.js';
+import { AlbumModel } from '../src/modules/gallery/models/album.model.js';
+import { galleryRepository } from '../src/modules/gallery/gallery.repository.js';
+import { TaskModel } from '../src/modules/tasks/tasks.model.js';
 const run = process.env.RUN_ATLAS_WEDDING_TESTS === '1';
 const tag = `wedding-test-${randomUUID()}`;
 const slugs = [
@@ -24,6 +28,9 @@ const slugs = [
   `${tag}-duplicate`,
   `${tag}-other-owner`,
   `${tag}-race-two`,
+  `${tag}-events`,
+  `${tag}-tasks`,
+  `${tag}-tasks-other`,
 ];
 const userIds: string[] = [];
 const cookies: string[] = [];
@@ -35,7 +42,12 @@ const input = {
   weddingDate: '2027-02-14',
   timezone: 'Asia/Kolkata',
 };
-async function write(method: 'post' | 'patch', path: string, body: object, cookie: string) {
+async function write(
+  method: 'post' | 'patch' | 'delete',
+  path: string,
+  body: object,
+  cookie: string,
+) {
   const csrf = await request(app).get('/api/v1/auth/csrf').set('Origin', origin);
   expect(csrf.status).toBe(200);
   const values: unknown = csrf.headers['set-cookie'];
@@ -83,11 +95,14 @@ describe.skipIf(!run)('Atlas wedding onboarding and isolation', () => {
         createdBy: { $in: userIds },
       }).select('_id');
       const ids = records.map((w) => w._id);
+      await AlbumModel.deleteMany({ weddingId: { $in: ids } });
+      await EventModel.deleteMany({ weddingId: { $in: ids } });
+      await TaskModel.deleteMany({ weddingId: { $in: ids } });
       await WeddingMembership.deleteMany({ weddingId: { $in: ids } });
       await WebsiteSettings.deleteMany({ weddingId: { $in: ids } });
       await AuditLog.deleteMany({
         actorUserId: { $in: userIds },
-        action: { $in: ['WEDDING_CREATED', 'WEDDING_UPDATED'] },
+        weddingId: { $in: ids },
       });
       await WeddingModel.deleteMany({ _id: { $in: ids }, createdBy: { $in: userIds } });
       await Session.deleteMany({ userId: { $in: userIds } });
@@ -252,5 +267,250 @@ describe.skipIf(!run)('Atlas wedding onboarding and isolation', () => {
     expect(
       (await request(app).get(`/api/v1/weddings/${id}`).set('Cookie', organizerCookie)).status,
     ).toBe(404);
+  }, 60000);
+  it('keeps event permissions, albums and schedule changes scoped to the wedding', async () => {
+    const owner = cookies[0]!;
+    const organizer = cookies[1]!;
+    const outsider = cookies[2]!;
+    const wedding = await write(
+      'post',
+      '',
+      { ...input, brideName: 'Events Bride', slug: slugs[7] },
+      owner,
+    );
+    expect(wedding.status).toBe(201);
+    const weddingId = String(wedding.body.data.wedding.id);
+    const path = '/' + weddingId + '/events';
+    const read = (cookie: string, suffix = '') =>
+      request(app)
+        .get('/api/v1/weddings' + path + suffix)
+        .set('Cookie', cookie);
+    const member = await WeddingMembership.create({
+      weddingId,
+      userId: userIds[1]!,
+      role: 'ORGANIZER',
+      status: 'ACTIVE',
+    });
+    const details = {
+      name: 'Sangeet',
+      type: 'SANGEET',
+      timezone: input.timezone,
+      organizerIds: [member.id],
+    };
+    expect((await read(organizer)).status).toBe(403);
+    expect((await write('post', path, details, organizer)).status).toBe(403);
+    expect((await read(outsider)).status).toBe(404);
+    expect(
+      (await write('post', path, { ...details, organizerIds: [userIds[2]] }, owner)).status,
+    ).toBe(422);
+    const albumFailure = vi
+      .spyOn(galleryRepository, 'ensureEventAlbum')
+      .mockRejectedValueOnce(new Error('Synthetic album failure'));
+    try {
+      expect((await write('post', path, details, owner)).status).toBe(500);
+      expect(await EventModel.countDocuments({ weddingId })).toBe(0);
+    } finally {
+      albumFailure.mockRestore();
+    }
+    const created = await write('post', path, details, owner);
+    expect(created.status).toBe(201);
+    const eventId = String(created.body.data.event.id);
+    expect(created.body.data.event.status).toBe('DRAFT');
+    expect(await AlbumModel.findOne({ weddingId, eventId })).toMatchObject({
+      id: created.body.data.defaultAlbumId,
+      type: 'EVENT',
+      visibility: 'ORGANIZERS_ONLY',
+    });
+    await WeddingMembership.updateOne(
+      { _id: member._id },
+      { $set: { 'permissions.events': true } },
+    );
+    expect((await read(organizer, '/' + eventId)).status).toBe(200);
+    const scheduled = await write(
+      'patch',
+      path + '/' + eventId,
+      {
+        startAt: '2027-04-12T14:30:00.000Z',
+        endAt: '2027-04-12T19:30:00.000Z',
+      },
+      organizer,
+    );
+    expect(scheduled.body.data.event.status).toBe('SCHEDULED');
+    const eventPath = path + '/' + eventId;
+    const addressEdit = await write(
+      'patch',
+      eventPath,
+      { venuePatch: { address: 'Updated address' } },
+      organizer,
+    );
+    expect(addressEdit.status).toBe(200);
+    const nameEdit = await write('patch', eventPath, { venuePatch: { name: 'New hall' } }, owner);
+    expect(nameEdit.status).toBe(200);
+    expect(nameEdit.body.data.event.venue).toEqual({
+      name: 'New hall',
+      address: 'Updated address',
+    });
+    expect((await write('patch', eventPath, { status: 'DRAFT' }, owner)).status).toBe(200);
+    const renamedDraft = await write(
+      'patch',
+      eventPath,
+      { name: 'Updated Sangeet', startAt: '2027-04-12T14:30:00Z' },
+      owner,
+    );
+    expect(renamedDraft.body.data.event.status).toBe('DRAFT');
+    expect((await write('patch', eventPath, { status: 'COMPLETED' }, owner)).status).toBe(200);
+    expect((await WeddingModel.findById(weddingId))?.guestAccessExpiresAt.toISOString()).toBe(
+      '2027-05-13T18:29:59.999Z',
+    );
+    expect(
+      (await write('patch', eventPath, { timezone: 'America/New_York' }, organizer)).status,
+    ).toBe(200);
+    const staleSchedule = await write(
+      'patch',
+      eventPath,
+      { expectedTimezone: 'Asia/Kolkata', startAt: '2027-04-12T15:00:00.000Z' },
+      owner,
+    );
+    expect(staleSchedule.status).toBe(409);
+    expect(staleSchedule.body.error.code).toBe('EVENT_TIMEZONE_CHANGED');
+    expect((await read(owner, '/' + eventId)).body.data.event.startAt).toBe(
+      '2027-04-12T14:30:00.000Z',
+    );
+    expect(
+      (await write('patch', path + '/' + eventId, { status: 'CANCELLED' }, organizer)).status,
+    ).toBe(200);
+    expect((await read(owner)).body.data.events[0].status).toBe('CANCELLED');
+    expect((await write('delete', path + '/' + eventId, {}, owner)).status).toBe(204);
+    expect((await read(owner)).body.data.events).toEqual([]);
+    expect(await AlbumModel.countDocuments({ weddingId, eventId })).toBe(1);
+  }, 60000);
+  it('assigns and tracks tasks with wedding and permission isolation', async () => {
+    const owner = cookies[0]!;
+    const organizer = cookies[1]!;
+    const outsider = cookies[2]!;
+    const wedding = await write(
+      'post',
+      '',
+      { ...input, brideName: 'Tasks Bride', slug: slugs[8] },
+      owner,
+    );
+    const other = await write(
+      'post',
+      '',
+      { ...input, brideName: 'Other Tasks Bride', slug: slugs[9] },
+      owner,
+    );
+    expect(wedding.status).toBe(201);
+    expect(other.status).toBe(201);
+    const weddingId = String(wedding.body.data.wedding.id);
+    const otherId = String(other.body.data.wedding.id);
+    const path = '/' + weddingId + '/tasks';
+    const read = (cookie: string, suffix = '') =>
+      request(app)
+        .get('/api/v1/weddings' + path + suffix)
+        .set('Cookie', cookie);
+    const member = await WeddingMembership.create({
+      weddingId,
+      userId: userIds[1]!,
+      role: 'ORGANIZER',
+      status: 'ACTIVE',
+    });
+    expect((await read(organizer)).status).toBe(403);
+    expect((await read(outsider)).status).toBe(404);
+    const eventInput = { name: 'Sangeet', type: 'SANGEET', timezone: input.timezone };
+    const event = await write('post', '/' + weddingId + '/events', eventInput, owner);
+    const foreignEvent = await write('post', '/' + otherId + '/events', eventInput, owner);
+    expect(event.status).toBe(201);
+    expect(foreignEvent.status).toBe(201);
+    const details = {
+      title: 'Confirm caterer',
+      eventId: String(event.body.data.event.id),
+      priority: 'HIGH',
+      status: 'TODO',
+      dueAt: '2027-02-12T18:29:59.999Z',
+      assigneeUserIds: [userIds[1]],
+      checklist: [{ text: 'Confirm menu', completed: false }],
+    };
+    expect((await write('post', path, details, organizer)).status).toBe(403);
+    expect(
+      (await write('post', path, { ...details, assigneeUserIds: [userIds[2]] }, owner)).status,
+    ).toBe(422);
+    expect(
+      (await write('post', path, { ...details, eventId: foreignEvent.body.data.event.id }, owner))
+        .status,
+    ).toBe(422);
+    const created = await write('post', path, details, owner);
+    expect(created.status).toBe(201);
+    const task = created.body.data.task;
+    const item = path + '/' + String(task.id);
+    await WeddingMembership.updateOne({ _id: member._id }, { $set: { 'permissions.tasks': true } });
+    expect((await read(organizer, '/event-options')).body.data.events).toEqual([
+      { id: details.eventId, name: 'Sangeet' },
+    ]);
+    const list = await read(organizer);
+    expect(list.status).toBe(200);
+    const filters = new URLSearchParams({
+      assigneeUserId: userIds[1]!,
+      eventId: details.eventId,
+      status: 'TODO',
+      priority: 'HIGH',
+      dueFrom: '2027-02-12T00:00:00.000Z',
+      dueTo: '2027-02-13T00:00:00.000Z',
+      search: 'confirm menu',
+    });
+    const matching = await read(organizer, '?' + filters);
+    expect(matching.status).toBe(200);
+    expect(matching.body.data).toMatchObject({ tasks: [{ id: task.id }], matchingTotal: 1 });
+    const empty = await read(organizer, '?status=COMPLETED');
+    expect(empty.body.data).toMatchObject({ tasks: [], matchingTotal: 0, summary: { total: 1 } });
+    expect((await read(organizer, '?status=INVALID')).status).toBe(422);
+    expect(list.body.data.summary).toMatchObject({
+      total: 1,
+      pending: 1,
+      attention: [{ id: task.id }],
+    });
+    expect(list.body.data.tasks[0]).toMatchObject({ id: task.id, assigneeUserIds: [userIds[1]] });
+    expect(
+      (
+        await request(app)
+          .get('/api/v1/weddings/' + otherId + '/tasks/' + String(task.id))
+          .set('Cookie', owner)
+      ).status,
+    ).toBe(404);
+    const checked = await write(
+      'patch',
+      item,
+      { checklist: [{ ...task.checklist[0], completed: true }] },
+      organizer,
+    );
+    expect(checked.status).toBe(200);
+    expect(checked.body.data.task.status).toBe('TODO');
+    expect(
+      (
+        await write(
+          'patch',
+          item,
+          { status: 'COMPLETED', expectedUpdatedAt: task.updatedAt },
+          organizer,
+        )
+      ).status,
+    ).toBe(409);
+    const completed = await write(
+      'patch',
+      item,
+      { status: 'COMPLETED', expectedUpdatedAt: checked.body.data.task.updatedAt },
+      organizer,
+    );
+    expect(completed.status).toBe(200);
+    expect((await read(owner, '/' + String(task.id))).body.data.task).toMatchObject({
+      status: 'COMPLETED',
+      checklist: [{ completed: true }],
+    });
+    expect((await write('patch', item, { status: 'CANCELLED' }, owner)).body.data.task.status).toBe(
+      'CANCELLED',
+    );
+    expect((await write('delete', item, {}, owner)).status).toBe(204);
+    expect((await read(owner, '/' + String(task.id))).status).toBe(404);
+    expect((await read(owner)).body.data.summary.total).toBe(0);
   }, 60000);
 });

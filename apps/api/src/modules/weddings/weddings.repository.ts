@@ -98,4 +98,17 @@ export const weddingsRepository = {
       .lean()
       .exec();
   },
+  async setDefaultGuestExpiry(id: string, expiry: Date, session: ClientSession) {
+    await WeddingModel.updateOne(
+      {
+        _id: id,
+        status: 'ACTIVE',
+        deletedAt: null,
+        guestAccessExpiryMode: 'DEFAULT',
+        guestAccessExpiresAt: { $ne: expiry },
+      },
+      { $set: { guestAccessExpiresAt: expiry } },
+      { session },
+    );
+  },
 };

@@ -6,6 +6,8 @@ import { randomUUID } from 'node:crypto';
 import { authRouter } from './modules/auth/index.js';
 import { weddingsRouter } from './modules/weddings/index.js';
 import { membershipsRouter } from './modules/memberships/memberships.routes.js';
+import { eventsRouter } from './modules/events/index.js';
+import { tasksRouter } from './modules/tasks/index.js';
 import { errorHandler } from './common/errors/error-handler.js';
 import { notFound } from './common/middleware/not-found.js';
 import { env } from './config/env.js';
@@ -30,6 +32,8 @@ app.get('/api/v1/health', (_request, response) => {
 
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1', membershipsRouter);
+app.use('/api/v1', eventsRouter);
+app.use('/api/v1', tasksRouter);
 app.use('/api/v1/weddings', weddingsRouter);
 // Other business routers stay unmounted until their validation and authorization exist.
 app.use(notFound);

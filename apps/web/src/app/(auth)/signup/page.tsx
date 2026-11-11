@@ -11,8 +11,10 @@ export const metadata: Metadata = {
 };
 export default async function SignupPage({
   searchParams,
-}: { searchParams?: Promise<{ next?: string }> } = {}) {
-  const returnTo = invitationReturnPath((await searchParams)?.next);
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const returnTo = invitationReturnPath((await searchParams).next);
   if (await getServerUser()) redirect(returnTo);
   return (
     <AuthForm mode="signup" returnTo={returnTo} initialEmail={await getInvitationEmail(returnTo)} />

@@ -15,7 +15,8 @@ import {
 import { createUnpublishedWebsite, initializeWebsiteSettings } from '../website/index.js';
 import { recordWeddingChange } from '../audit/index.js';
 import { weddingsRepository } from './weddings.repository.js';
-import { defaultGuestExpiry } from './wedding-dates.js';
+import { defaultGuestExpiry, eventCivilDate } from './wedding-dates.js';
+import { finalScheduledEvent } from '../events/events.queries.js';
 let ready: Promise<void> | undefined;
 export async function initializeWeddings() {
   ready ??= Promise.all([
@@ -160,10 +161,16 @@ export const weddingsService = {
           )
         )
           duplicateCouple();
-        // Events are not mounted yet. Integrate final-event expiry via events' public interface when implemented.
+        const finalEvent =
+          before.guestAccessExpiryMode === 'DEFAULT'
+            ? await finalScheduledEvent(id, session)
+            : undefined;
         const expiry =
           before.guestAccessExpiryMode === 'DEFAULT'
-            ? defaultGuestExpiry(input.weddingDate, input.timezone)
+            ? defaultGuestExpiry(
+                finalEvent ? eventCivilDate(finalEvent, input.timezone) : input.weddingDate,
+                input.timezone,
+              )
             : before.guestAccessExpiresAt;
         const wedding = await weddingsRepository.update(id, input, expiry, session);
         if (!wedding) return missing();

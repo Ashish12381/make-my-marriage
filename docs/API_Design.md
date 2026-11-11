@@ -357,7 +357,7 @@ Allow only supported HTTPS YouTube hosts and recognized watch/live URL forms (in
 
 | Method | Route | Auth | Contract / purpose |
 |---|---|---|---|
-| `GET` | `/weddings/:weddingId/tasks` | Feature: tasks | Filter by `eventId`, `status`, `assigneeUserId`, date and priority |
+| `GET` | `/weddings/:weddingId/tasks` | Feature: tasks | Filter by `eventId`, `status`, `assigneeUserId`, `priority`, `dueFrom`, `dueTo`, or `search` before pagination |
 | `POST` | `/weddings/:weddingId/tasks` | Feature: tasks | Create wedding-level or event-specific task |
 | `GET` | `/weddings/:weddingId/tasks/:taskId` | Feature: tasks | Read task with bounded checklist/comments |
 | `PATCH` | `/weddings/:weddingId/tasks/:taskId` | Feature: tasks | Change fields/status/assignees/checklist within limits |

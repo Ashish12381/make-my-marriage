@@ -1,4 +1,16 @@
 // Civil dates, not UTC-midnight instants. Binary search handles DST transitions.
+export function eventCivilDate(instant: Date, timezone: string): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(instant);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value;
+  return `${value('year')}-${value('month')}-${value('day')}`;
+}
+
 export function defaultGuestExpiry(weddingDate: string, timezone: string): Date {
   const date = new Date(`${weddingDate}T00:00:00Z`);
   date.setUTCDate(date.getUTCDate() + 30);

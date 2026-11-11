@@ -188,12 +188,14 @@ describe('authentication navigation', () => {
   });
   it('redirects authenticated signup visits before returning the form', async () => {
     validSession();
-    await expect(SignupPage()).rejects.toThrow('redirect:/');
+    await expect(SignupPage({ searchParams: Promise.resolve({}) })).rejects.toThrow('redirect:/');
   });
   it('allows signed-out visitors to open login and signup', async () => {
     await expect(
       LoginPage({ searchParams: Promise.resolve({ registered: '1' }) }),
     ).resolves.toMatchObject({ props: { mode: 'login', accountCreated: true } });
-    await expect(SignupPage()).resolves.toMatchObject({ props: { mode: 'signup' } });
+    await expect(SignupPage({ searchParams: Promise.resolve({}) })).resolves.toMatchObject({
+      props: { mode: 'signup' },
+    });
   });
 });

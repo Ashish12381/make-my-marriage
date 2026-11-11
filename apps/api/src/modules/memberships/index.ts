@@ -5,4 +5,6 @@ export {
   listActiveWeddingMemberships,
   requireWeddingMembership,
   requireWeddingFeature,
+  validateActiveWeddingMembers,
+  validateTaskAssignees,
 } from './memberships.service.js';

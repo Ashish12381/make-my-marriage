@@ -1,9 +1,11 @@
 'use client';
 import Link from 'next/link';
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
-import type { TeamMember } from '@make-my-marriage/contracts';
+import type { TaskSummary, TeamMember, WeddingEvent } from '@make-my-marriage/contracts';
 import { getWedding } from '@/lib/api/weddings';
 import { getTeam } from '@/lib/api/team';
+import { classifyEventsLoadError, listEvents } from '@/lib/api/events';
+import { listTasks } from '@/lib/api/tasks';
 import { authErrorMessage } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/client';
 import { subscribeToSessionChanges } from '@/lib/auth/session-events';
@@ -29,6 +31,8 @@ function WeddingOverviewContent({ weddingId, ready }: { weddingId: string; ready
     initialWeddingOverview,
   );
   const [attempt, setAttempt] = useState(0);
+  const [events, setEvents] = useState<WeddingEvent[] | 'restricted' | 'unavailable' | null>(null);
+  const [tasks, setTasks] = useState<TaskSummary | 'restricted' | 'unavailable' | null>(null);
   const modal = useRef<HTMLDialogElement>(null);
   const weddingRequest = useRef<AbortController>(null);
   const handleAccessRejection = useCallback((error: unknown) => {
@@ -37,6 +41,8 @@ function WeddingOverviewContent({ weddingId, ready }: { weddingId: string; ready
     if (status !== 401 && status !== 403 && status !== 404) return false;
 
     weddingRequest.current?.abort();
+    setEvents(null);
+    setTasks(null);
     dispatch({
       type: 'failed',
       message:
@@ -53,6 +59,40 @@ function WeddingOverviewContent({ weddingId, ready }: { weddingId: string; ready
     setAttempt((n) => n + 1);
   }
   useEffect(() => subscribeToSessionChanges(() => setAttempt((n) => n + 1)), []);
+  useEffect(() => {
+    if (ready || !/^[a-f0-9]{24}$/i.test(weddingId)) return;
+    const controller = new AbortController();
+    const { signal } = controller;
+    void listTasks(weddingId, 1, signal)
+      .then(({ summary }) => {
+        if (!signal.aborted && !weddingRequest.current?.signal.aborted) setTasks(summary);
+      })
+      .catch(async (error: unknown) => {
+        if (signal.aborted || weddingRequest.current?.signal.aborted) return;
+        const outcome = await classifyEventsLoadError(error);
+        if (signal.aborted || weddingRequest.current?.signal.aborted) return;
+        if (outcome === 'access-rejected') handleAccessRejection(error);
+        else setTasks(outcome);
+      });
+    return () => controller.abort();
+  }, [weddingId, ready, attempt, handleAccessRejection]);
+  useEffect(() => {
+    if (ready || !/^[a-f0-9]{24}$/i.test(weddingId)) return;
+    const controller = new AbortController();
+    void listEvents(weddingId, controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted && !weddingRequest.current?.signal.aborted)
+          setEvents(result);
+      })
+      .catch(async (error: unknown) => {
+        if (controller.signal.aborted || weddingRequest.current?.signal.aborted) return;
+        const outcome = await classifyEventsLoadError(error);
+        if (controller.signal.aborted || weddingRequest.current?.signal.aborted) return;
+        if (outcome === 'access-rejected') handleAccessRejection(error);
+        else setEvents(outcome);
+      });
+    return () => controller.abort();
+  }, [weddingId, ready, attempt, handleAccessRejection]);
   useEffect(() => {
     const controller = new AbortController();
     weddingRequest.current = controller;
@@ -160,6 +200,8 @@ function WeddingOverviewContent({ weddingId, ready }: { weddingId: string; ready
       {!editing && refreshWarning}
       <WeddingDashboard
         wedding={wedding}
+        events={events}
+        tasks={tasks}
         editDetails={() => dispatch({ type: 'edit' })}
         team={
           <TeamSummary

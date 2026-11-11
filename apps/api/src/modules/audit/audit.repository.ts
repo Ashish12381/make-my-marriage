@@ -1,6 +1,32 @@
 import { AuditLog } from './models/audit-log.model.js';
 import type { ClientSession } from 'mongoose';
 export const auditRepository = {
+  async recordTaskChange(
+    weddingId: string,
+    actorUserId: string,
+    actorType: 'WEDDING_ADMIN' | 'ORGANIZER',
+    resourceId: string,
+    action: 'TASK_CREATED' | 'TASK_UPDATED' | 'TASK_REMOVED',
+    session: ClientSession,
+  ) {
+    await AuditLog.create(
+      [{ weddingId, actorUserId, actorType, action, resourceType: 'task', resourceId }],
+      { session },
+    );
+  },
+  async recordEventLifecycle(
+    weddingId: string,
+    actorUserId: string,
+    actorType: 'WEDDING_ADMIN' | 'ORGANIZER',
+    resourceId: string,
+    action: 'EVENT_CANCELLED' | 'EVENT_ARCHIVED',
+    session: ClientSession,
+  ) {
+    await AuditLog.create(
+      [{ weddingId, actorUserId, actorType, action, resourceType: 'event', resourceId }],
+      { session },
+    );
+  },
   async recordMembershipChange(
     weddingId: string,
     actorUserId: string | undefined,

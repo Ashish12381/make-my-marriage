@@ -52,6 +52,20 @@ export const membershipsRepository = {
       status: 'ACTIVE',
     }).session(session);
   },
+  countActiveMembers(weddingId: string, ids: string[], session: ClientSession) {
+    return WeddingMembership.countDocuments({
+      weddingId,
+      _id: { $in: ids },
+      status: 'ACTIVE',
+    }).session(session);
+  },
+  countActiveUsers(weddingId: string, userIds: string[], session: ClientSession) {
+    return WeddingMembership.countDocuments({
+      weddingId,
+      userId: { $in: userIds },
+      status: 'ACTIVE',
+    }).session(session);
+  },
   pendingInvite(weddingId: string, email: string, session: ClientSession) {
     return MembershipInviteModel.exists({
       weddingId,

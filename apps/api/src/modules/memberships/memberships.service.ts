@@ -34,8 +34,12 @@ export async function listActiveWeddingMemberships(userId: string) {
     role: member.role as WeddingRole,
   }));
 }
-export async function requireWeddingMembership(weddingId: string, userId: string) {
-  const membership = await membershipsRepository.activeForWedding(weddingId, userId);
+export async function requireWeddingMembership(
+  weddingId: string,
+  userId: string,
+  session?: ClientSession,
+) {
+  const membership = await membershipsRepository.activeForWedding(weddingId, userId, session);
   if (!membership)
     throw new AppError(
       404,
@@ -52,12 +56,39 @@ export async function requireWeddingFeature(
   weddingId: string,
   userId: string,
   feature: OrganizerPermission,
+  session?: ClientSession,
 ) {
-  await requireActiveWedding(weddingId);
-  const membership = await requireWeddingMembership(weddingId, userId);
+  await requireActiveWedding(weddingId, session);
+  const membership = await requireWeddingMembership(weddingId, userId, session);
   if (membership.role !== 'WEDDING_ADMIN' && !membership.permissions[feature])
     throw new AppError(403, 'FORBIDDEN', 'You do not have permission to access this area.');
   return membership;
+}
+export async function validateActiveWeddingMembers(
+  weddingId: string,
+  ids: string[],
+  session: ClientSession,
+) {
+  const uniqueIds = [...new Set(ids)];
+  if (
+    uniqueIds.length &&
+    (await membershipsRepository.countActiveMembers(weddingId, uniqueIds, session)) !==
+      uniqueIds.length
+  ) {
+    throw new AppError(422, 'INVALID_EVENT_ORGANIZERS', 'Choose active members of this wedding.');
+  }
+}
+export async function validateTaskAssignees(
+  weddingId: string,
+  userIds: string[],
+  session: ClientSession,
+) {
+  const unique = [...new Set(userIds)];
+  if (
+    unique.length &&
+    (await membershipsRepository.countActiveUsers(weddingId, unique, session)) !== unique.length
+  )
+    throw new AppError(422, 'INVALID_TASK_ASSIGNEES', 'Choose active members of this wedding.');
 }
 const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 function usable(invite: Awaited<ReturnType<typeof membershipsRepository.findInviteToken>>) {

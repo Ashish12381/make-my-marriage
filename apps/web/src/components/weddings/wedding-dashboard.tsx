@@ -1,48 +1,17 @@
 'use client';
 import Link from 'next/link';
-import { useId, useRef, useState, type ReactNode } from 'react';
-import type { Wedding } from '@make-my-marriage/contracts';
+import type { ReactNode } from 'react';
+import type { TaskSummary, Wedding, WeddingEvent } from '@make-my-marriage/contracts';
+import { eventSchedule, isUpcomingEvent } from '@/lib/events';
 import { formatWeddingDate, weddingCountdown } from '@/lib/weddings';
-import { SignOutButton } from '../auth/sign-out-button';
-import { UserIdentity } from '../auth/user-identity';
+import { isOverdueTask, taskDueDate, taskPriorityLabels } from '@/lib/tasks';
+import {
+  DashboardIcon,
+  WorkspaceSidebar,
+  type IconName,
+  type WorkspaceNavGroup,
+} from './workspace-sidebar';
 import { sampleEvents, sampleExpenses, sampleTasks } from './dashboard-samples';
-
-const icons = {
-  home: 'M3 12 12 4l9 8M5 10v10h14V10M9 20v-6h6v6',
-  calendar: 'M5 5h14a2 2 0 0 1 2 2v13H3V7a2 2 0 0 1 2-2ZM7 3v4m10-4v4M3 10h18',
-  tasks: 'M8 5H5v16h14V5h-3M8 3h8v4H8zM8 13l2 2 5-5',
-  money: 'M3 5h15v4M3 5v10h4m0-6h14v11H7zM12 14h4m-2-2v4',
-  vendors: 'M5 21V3h14v18M3 21h18M9 7h1m4 0h1m-6 4h1m4 0h1m-5 10v-5h4v5',
-  people:
-    'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2h14Zm0-6a4 4 0 0 1 6 4v2h-3M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7-8a4 4 0 0 1 0 8',
-  mail: 'M3 5h18v14H3zM3 6l9 7 9-7',
-  activity: 'M3 12h4l3-6 4 12 3-6h4',
-  photo: 'M3 4h18v16H3zM3 17l5-5 4 4 4-5 5 6M8 8h.01',
-  globe:
-    'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20ZM2 12h20M12 2a16 16 0 0 1 0 20 16 16 0 0 1 0-20Z',
-  settings:
-    'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM10 3h4l1 3 3 1 3 4v2l-3 4-3 1-1 3h-4l-1-3-3-1-3-4v-2l3-4 3-1z',
-} as const;
-
-type IconName = keyof typeof icons;
-
-function DashboardIcon({ name }: { name: IconName }) {
-  return (
-    <svg
-      aria-hidden="true"
-      width="19"
-      height="19"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d={icons[name]} />
-    </svg>
-  );
-}
 
 function DashboardPanel({
   id,
@@ -81,29 +50,33 @@ export function WeddingDashboard({
   editDetails,
   team,
   preview = false,
+  events = null,
+  tasks = null,
 }: {
   wedding: Wedding;
   editDetails?: () => void;
   team: ReactNode;
   preview?: boolean;
+  events?: WeddingEvent[] | 'restricted' | 'unavailable' | null;
+  tasks?: TaskSummary | 'restricted' | 'unavailable' | null;
 }) {
   const sample = preview || process.env.NODE_ENV === 'development';
   const admin = wedding.role === 'WEDDING_ADMIN';
   const canEdit = admin && editDetails;
   const overview = '/weddings/' + wedding.id;
+  const eventsHref = preview ? '#dashboard-events' : overview + '/events';
+  const tasksHref = preview ? '#dashboard-tasks' : overview + '/tasks';
+  const taskSummary = typeof tasks === 'object' ? tasks : null;
+  const taskCount = preview ? '12' : taskSummary ? String(taskSummary.pending) : '—';
+  const upcoming = Array.isArray(events) ? events.filter((event) => isUpcomingEvent(event)) : [];
+  const nextEvent = upcoming[0];
   const initials = [wedding.groomName, wedding.brideName]
     .map((name) => Array.from(name.trim())[0])
     .filter(Boolean)
     .join('&')
     .toUpperCase();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuButton = useRef<HTMLButtonElement>(null);
-  const navId = useId();
   const countdown = weddingCountdown(wedding.weddingDate, wedding.timezone);
-  const groups: {
-    label: string;
-    items: { label: string; icon: IconName; href?: string; badge?: string | undefined }[];
-  }[] = [
+  const groups: WorkspaceNavGroup[] = [
     {
       label: 'Main',
       items: [
@@ -111,14 +84,18 @@ export function WeddingDashboard({
         {
           label: 'Events',
           icon: 'calendar',
-          href: '#dashboard-events',
-          badge: sample ? '5' : undefined,
+          href: events === 'restricted' ? undefined : eventsHref,
+          badge: preview
+            ? String(sampleEvents.length)
+            : Array.isArray(events)
+              ? String(events.length)
+              : undefined,
         },
         {
           label: 'Tasks',
           icon: 'tasks',
-          href: '#dashboard-tasks',
-          badge: sample ? '12' : undefined,
+          href: tasks === 'restricted' ? undefined : tasksHref,
+          badge: taskCount === '—' ? undefined : taskCount,
         },
       ],
     },
@@ -167,12 +144,39 @@ export function WeddingDashboard({
   const metrics: { label: string; value: string; detail: string; icon: IconName }[] = [
     {
       label: 'Total events',
-      value: String(sampleEvents.length),
-      detail: 'Next: Haldi Ceremony',
+      value: preview
+        ? String(sampleEvents.length)
+        : Array.isArray(events)
+          ? String(events.length)
+          : '—',
+      detail: preview
+        ? 'Next: Haldi Ceremony'
+        : nextEvent
+          ? 'Next: ' + nextEvent.name
+          : Array.isArray(events)
+            ? 'No upcoming events'
+            : events === 'restricted'
+              ? 'Access restricted'
+              : events === 'unavailable'
+                ? 'Unavailable'
+                : 'Loading…',
       icon: 'calendar',
     },
     { label: 'Invited families', value: '142', detail: 'Family invitations', icon: 'people' },
-    { label: 'Pending tasks', value: '12', detail: '3 due this week', icon: 'tasks' },
+    {
+      label: 'Pending tasks',
+      value: taskCount,
+      detail: preview
+        ? '3 due this week'
+        : taskSummary
+          ? `${taskSummary.overdue} overdue`
+          : tasks === 'restricted'
+            ? 'Access restricted'
+            : tasks === 'unavailable'
+              ? 'Unavailable'
+              : 'Loading…',
+      icon: 'tasks',
+    },
     ...(admin
       ? [
           {
@@ -193,91 +197,7 @@ export function WeddingDashboard({
 
   return (
     <div className="wedding-dashboard" id="dashboard-overview">
-      <aside
-        className="wedding-dashboard-sidebar"
-        onKeyDown={(event) => {
-          if (event.key === 'Escape' && menuOpen && menuButton.current?.getClientRects().length) {
-            event.preventDefault();
-            setMenuOpen(false);
-            menuButton.current.focus();
-          }
-        }}
-      >
-        <div className="wedding-dashboard-brand">
-          <Link href="/weddings">
-            <span aria-hidden="true">♥</span>
-            <strong>
-              Make My Marriage<small>Workspace</small>
-            </strong>
-          </Link>
-          <button
-            ref={menuButton}
-            type="button"
-            className="wedding-dashboard-navigation"
-            aria-expanded={menuOpen}
-            aria-controls={navId}
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            Menu <span aria-hidden="true">⌄</span>
-          </button>
-        </div>
-        <nav
-          id={navId}
-          aria-label="Wedding workspace"
-          className="wedding-dashboard-nav"
-          data-open={menuOpen}
-        >
-          <Link href="/weddings" className="wedding-dashboard-switch">
-            <span aria-hidden="true">←</span>
-            My Weddings
-          </Link>
-          {groups.map(({ label, items }) => (
-            <div key={label} className="wedding-dashboard-nav-group">
-              <p>{label}</p>
-              <ul>
-                {items.map(({ label: item, icon, href, badge }) => {
-                  const content = (
-                    <>
-                      <DashboardIcon name={icon} />
-                      <span>{item}</span>
-                      {badge && <small>{badge}</small>}
-                    </>
-                  );
-                  return (
-                    <li key={item}>
-                      {href ? (
-                        <Link
-                          href={href}
-                          aria-current={item === 'Overview' ? 'page' : undefined}
-                          onClick={() => setMenuOpen(false)}
-                        >
-                          {content}
-                        </Link>
-                      ) : item === 'Wedding Settings' ? (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMenuOpen(false);
-                            editDetails?.();
-                          }}
-                        >
-                          {content}
-                        </button>
-                      ) : (
-                        <span>{content}</span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-          <div className="wedding-dashboard-account">
-            <UserIdentity />
-            <SignOutButton className="wedding-text-button" />
-          </div>
-        </nav>
-      </aside>
+      <WorkspaceSidebar groups={groups} active="Overview" editDetails={editDetails} />
       <div className="wedding-dashboard-main">
         <div className="wedding-dashboard-toolbar">
           <strong>Dashboard Overview</strong>
@@ -297,7 +217,7 @@ export function WeddingDashboard({
             <p className="wedding-dashboard-note">
               {preview
                 ? 'All wedding data on this page is fictional.'
-                : 'Wedding details and your planning team are live. Planning figures, schedules, tasks, and activity are examples.'}
+                : 'Wedding details, events, tasks and your planning team are live. Guest, expense and activity figures are examples.'}
             </p>
           )}
           <section className="wedding-card wedding-dashboard-hero">
@@ -315,20 +235,29 @@ export function WeddingDashboard({
               </p>
               {wedding.defaultVenue?.name && <p>{wedding.defaultVenue.name}</p>}
               {wedding.defaultVenue?.address && <p>{wedding.defaultVenue.address}</p>}
-              {sample && (
+              {preview && (
                 <p>
                   <strong>Sample next event</strong> · Haldi Ceremony · Nov 12, 10:00 AM · Courtyard
                   Poolside
                 </p>
               )}
+              {nextEvent && (
+                <p>
+                  <strong>Next event</strong> · {nextEvent.name} · {eventSchedule(nextEvent)}
+                </p>
+              )}
             </div>
             <div className="wedding-dashboard-actions">
-              <Link className="wedding-button wedding-button-secondary" href="#dashboard-events">
-                <DashboardIcon name="calendar" /> Events
-              </Link>
-              <Link className="wedding-button wedding-button-secondary" href="#dashboard-tasks">
-                <DashboardIcon name="tasks" /> Tasks
-              </Link>
+              {events !== 'restricted' && (
+                <Link className="wedding-button wedding-button-secondary" href={eventsHref}>
+                  <DashboardIcon name="calendar" /> Events
+                </Link>
+              )}
+              {tasks !== 'restricted' && (
+                <Link className="wedding-button wedding-button-secondary" href={tasksHref}>
+                  <DashboardIcon name="tasks" /> Tasks
+                </Link>
+              )}
               <Link className="wedding-button wedding-button-secondary" href="#dashboard-rsvp">
                 <DashboardIcon name="mail" /> Guest Invitations
               </Link>
@@ -353,8 +282,8 @@ export function WeddingDashboard({
                   {label}
                 </dt>
                 <dd>
-                  {sample ? value : '—'}
-                  <small>{sample ? detail : 'Coming soon'}</small>
+                  {sample || label === 'Total events' ? value : '—'}
+                  <small>{sample || label === 'Total events' ? detail : 'Coming soon'}</small>
                 </dd>
               </div>
             ))}
@@ -364,9 +293,16 @@ export function WeddingDashboard({
               id="dashboard-events"
               title="Upcoming Events"
               icon="calendar"
-              description={sample ? '5 sample wedding events' : 'Your wedding schedule'}
+              description={preview ? '5 sample wedding events' : 'Your wedding schedule'}
+              action={
+                !preview && Array.isArray(events) ? (
+                  <Link className="wedding-text-button" href={eventsHref + '?add=1'}>
+                    Add event
+                  </Link>
+                ) : undefined
+              }
             >
-              {sample ? (
+              {preview ? (
                 <ul className="wedding-dashboard-list">
                   {sampleEvents.map((event) => (
                     <li className="wedding-dashboard-event" key={event.name}>
@@ -388,17 +324,48 @@ export function WeddingDashboard({
                     </li>
                   ))}
                 </ul>
+              ) : upcoming.length ? (
+                <ul className="wedding-dashboard-list">
+                  {upcoming.slice(0, 5).map((event) => (
+                    <li className="wedding-dashboard-event" key={event.id}>
+                      <div>
+                        <Link className="wedding-text-button" href={eventsHref + '/' + event.id}>
+                          {event.name}
+                        </Link>
+                        <p>
+                          {eventSchedule(event)}
+                          {event.venue?.name ? ' · ' + event.venue.name : ''}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                <p>The wedding schedule will appear here when Events is available.</p>
+                <p>
+                  {events === 'restricted'
+                    ? 'Events access is restricted.'
+                    : events === 'unavailable'
+                      ? 'The schedule is temporarily unavailable.'
+                      : events === null
+                        ? 'Loading your schedule…'
+                        : 'No upcoming events yet.'}
+                </p>
               )}
             </DashboardPanel>
             <DashboardPanel
               id="dashboard-tasks"
               title="Tasks Requiring Attention"
               icon="tasks"
-              description="Assigned tasks and approaching deadlines"
+              description="Open tasks ordered by due date"
+              action={
+                tasks !== 'restricted' ? (
+                  <Link className="wedding-text-button" href={tasksHref}>
+                    View tasks
+                  </Link>
+                ) : undefined
+              }
             >
-              {sample ? (
+              {preview ? (
                 <ul className="wedding-dashboard-list wedding-dashboard-rows">
                   {sampleTasks.map((task) => (
                     <li key={task.name}>
@@ -412,8 +379,29 @@ export function WeddingDashboard({
                     </li>
                   ))}
                 </ul>
+              ) : taskSummary?.attention.length ? (
+                <ul className="wedding-dashboard-list wedding-dashboard-rows">
+                  {taskSummary.attention.map((task) => (
+                    <li key={task.id}>
+                      <Link href={tasksHref + '/' + task.id}>{task.title}</Link>
+                      <span className="wedding-badge">
+                        {isOverdueTask(task) ? 'Overdue · ' : 'Due '}
+                        {taskDueDate(task.dueAt, wedding.timezone)} ·{' '}
+                        {taskPriorityLabels[task.priority]}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               ) : (
-                <p>Coming soon</p>
+                <p>
+                  {taskSummary
+                    ? 'No open tasks with deadlines.'
+                    : tasks === 'restricted'
+                      ? 'Ask a Wedding Admin for Tasks access.'
+                      : tasks === 'unavailable'
+                        ? 'Task summary unavailable.'
+                        : 'Loading tasks…'}
+                </p>
               )}
             </DashboardPanel>
             <DashboardPanel
