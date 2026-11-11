@@ -1,12 +1,12 @@
 # Make My Marriage — Project Status
 
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-11
 
-**Latest milestone:** Core Wedding Events is implemented locally. The user confirmed creating an event through the app after the local API restart. The dashboard now shows live event data and offers an **Add event** shortcut.
+**Latest milestone:** Core Task Planner is implemented locally. The wedding dashboard shows live pending task totals and tasks requiring attention.
 
-**Application baseline for this update:** `95c7c7b` on `dev` — `feat(web): add wedding dashboard and canonical domain redirect`. The local `origin/dev` tracking ref matches this commit. The Wedding Events implementation and follow-up fixes are in the local working tree.
+**Application baseline for this update:** `95c7c7b` on `dev`. The local `origin/dev` tracking ref matches this commit. Wedding Events, Task Planner, and their follow-up fixes are in the working tree.
 
-**Current stage:** The homepage, Atlas-backed authentication, wedding onboarding and editing, Family & Team, the dashboard, and core Wedding Events are implemented. Finish Events browser QA and release verification before starting the **Task Planner**.
+**Current stage:** The public demo is deployed. The latest dashboard, Wedding Events, and Task Planner changes have been verified locally. Their public rollout still needs verification.
 
 The early local email test used the restricted Resend test sender. The user later verified the custom sending domain in Resend and reported receiving an invitation from it. Acceptance for that deployed invitation remains to be tested.
 
@@ -31,12 +31,12 @@ This document is a development handoff. Use it alongside the PRD and design docu
 
 ## Deployment status
 
-The web app and Express API are deployed as separate Vercel projects for the public demo. The owner chose `main` as the production branch after merging PR #1. Wedding Events rollout is pending. Verify the branch and deployed commit in both projects before the release smoke test.
+The web app and Express API are deployed as separate Vercel projects for the public demo. The owner chose `main` as the production branch after merging PR #1. The latest dashboard, Events, and Tasks rollout is pending. Verify the branch and deployed commit in both projects before the release smoke test.
 
 | Component | Verified status | Deployment work remaining |
 | --- | --- | --- |
-| Web application | Public demo at [planyourwedding.online](https://planyourwedding.online/) | Confirm the deployed revision and smoke-test the dashboard, Events, and alias redirect |
-| API | Separate Vercel Express deployment. Health and custom-domain auth were verified on 10 November | Release the Events routes with the web changes and verify authenticated list, detail, and creation requests |
+| Web application | Public demo at [planyourwedding.online](https://planyourwedding.online/) | Confirm the deployed revision and smoke-test the dashboard, Events, Tasks, and alias redirect |
+| API | Separate Vercel Express deployment. Health and custom-domain auth were verified on 10 November | Release the Events and Tasks routes with the matching web changes and verify authenticated list, detail, and creation requests |
 | MongoDB Atlas | Separate development and demo databases; demo account sign-in and session lookup verified | Confirm backup and restore procedures before broader rollout |
 | Browser sessions | Custom-domain sign-in, session lookup and sign-out succeeded on 10 November. The old Vercel alias reproduced `ORIGIN_REJECTED` | The alias redirect is in the current source. Verify path and query preservation on the deployed site |
 | CI | GitHub Actions verification workflow exists | Remote workflow results for the current changes have not been checked; the workflow does not deploy |
@@ -53,7 +53,7 @@ The web app and Express API are deployed as separate Vercel projects for the pub
 - API liveness endpoint: `GET /api/v1/health` returns `{ "status": "ok" }`.
 - Helmet, credential-aware frontend CORS, JSON body limits, cookie parsing, request validation infrastructure, not-found handling, and sanitized error handling.
 - Zod environment validation and optional MongoDB connection at startup. The scaffold can run without a configured database.
-- The mounted API covers authentication, wedding setup and editing, membership and invitations, and Wedding Events.
+- The mounted API covers authentication, wedding setup and editing, membership and invitations, Wedding Events, and Task Planner.
 - Session authentication validates hashed tokens, expiry, revocation, and active users. Wedding and membership services enforce active membership and Admin-only mutations. Events uses the Organizer feature guard for reads and writes.
 - R2 and Google Places configuration-validation foundations; bounded Resend membership email integration with persisted delivery attempts. The initial send failed sender-domain verification; a later development invitation reached Spam using the restricted test sender.
 - Browser API client configured to include credentials. No browser token storage or JWT authentication.
@@ -85,10 +85,10 @@ The dashboard uses live event counts and upcoming events. Other planning areas h
 | PRD area | Current status | Remaining implementation |
 | --- | --- | --- |
 | 6.1 / FR-01 — Authentication & Wedding Setup | Auth, signed-in navbar identity, invitation-linked email prefill, My Weddings, atomic wedding creation, initial Admin membership, overview, detail editing and switching implemented | Password reset, profile editing, cover uploads, later slug editing, expected-size schema reconciliation, and broader invite/first-event onboarding |
-| 6.2 / FR-02 — Family & Organizer Management | Members/Invitations UI, email-matched token acceptance, recipient signup/login guidance, role/permission changes, removal/revocation, audit records, concurrent last-admin protection, and active team assignment to events | QA-03 stale validation message, enforcement in future modules, member activity UI, and broader rollout QA |
-| 6.3 / FR-03 — Multiple Wedding Events | Core flow implemented locally with event presets, custom events, drafts, scheduling, organizer assignment, editing, cancellation, archiving, and private default albums | Browser QA for editing, cancellation, and archiving. Cover uploads, YouTube livestreams, linked planning records, guest invitations and notifications, and website publishing |
-| 6.4 / FR-04 — Wedding Dashboard | Responsive workspace dashboard with live wedding details, countdown, team roster, event totals and upcoming events, plus Admin editing, navigation, and an Add event shortcut | Permission-aware RSVP, task, expense, and activity data |
-| 6.5 / FR-05 — Task Planner | Route placeholder; interactive homepage sample | Persistent tasks, assignment, checklist/comments, views/filters, templates, and reminders |
+| 6.2 / FR-02 — Family & Organizer Management | Member and invitation management, email-matched token acceptance, role and permission changes, removal, revocation, and last-admin protection. QA-03 fixed and rechecked locally | Member activity UI and deployed new-recipient acceptance |
+| 6.3 / FR-03 — Multiple Wedding Events | Presets, custom events, drafts, scheduling, organizer assignment, editing, cancellation, archiving, and private default albums. Core flows passed local QA | Two concurrent-edit findings, public rollout, and integrations for covers, livestreams, guest invitations, and publishing |
+| 6.4 / FR-04 — Wedding Dashboard | Responsive workspace with live wedding details, countdown, team roster, event totals, upcoming events, pending task totals, and tasks requiring attention | RSVP, expense, and activity data, plus deployed revision verification |
+| 6.5 / FR-05 — Task Planner | Persistent wedding-wide and event-linked tasks, team assignments, checklists, due dates, lifecycle actions, search, and filters | Calendar view, comments and activity history UI, templates, reminders, and public rollout |
 | 6.6 / FR-06 — Expenses & Payment Records | Route placeholder; sample charts/cards | Expenses, payments, paise calculations, attachments, reports, CSV export, and linked vendor ledger |
 | 6.7 / FR-07 — Vendor Discovery & Management | Route placeholder; illustrative vendor cards | Google Places discovery, filters/map, manual vendors, shortlist/status, notes, quotations, and expense links |
 | 6.8 / FR-08 — Guests & Family RSVP | Route placeholder; sample invitation | Family records/import, event invitations, guest access tokens, per-event responses/deadlines, and exports |
@@ -131,9 +131,14 @@ Use the complete rules in AGENTS.md and the design documents. Particularly:
 
 ## Recommended next milestone
 
-1. Finish Events browser QA. Edit a scheduled event, reload, cancel it, check the dashboard and the Cancelled filter, then archive it. Check the Organizer and narrow-screen flows.
-2. Release the matching web and API revisions to the public demo and verify Events access and creation there.
-3. Build the **Task Planner (FR-05)**. Use the existing wedding membership and task permissions for assignments, and let tasks reference real events from the same wedding.
+1. Release matching web and API revisions from `main` and smoke-test the dashboard, Events, Tasks, and alias redirect on the public demo.
+2. Proposed next V1 feature is **Expenses & Payment Records (FR-06)**. Start with wedding-wide or event-linked expenses, payments recorded separately in integer paise, and live paid and outstanding totals on the dashboard.
+
+## Task Planner milestone — 2026-11-11
+
+- Open **My Weddings → Open Wedding → Tasks** or select **View tasks** on the dashboard. Planners can create, edit, assign, complete, reopen, cancel, and remove tasks. Checklist progress persists independently of task completion.
+- Tasks can be wedding-wide or linked to an event in the same wedding. Assignments use active planning-team members. The API enforces wedding isolation and the Tasks permission for Organizers.
+- Search and filters for event, assignee, status, priority, and due date apply before pagination. The dashboard uses live task totals and deadlines.
 
 ## Wedding Events milestone — 2026-11-10
 
@@ -145,7 +150,7 @@ Use the complete rules in AGENTS.md and the design documents. Particularly:
 ## Wedding dashboard milestone — 2026-11-10
 
 - The private overview opens from My Weddings and shows the real wedding title, venue, countdown, planning team, and Admin edit controls. The sidebar, compact metrics, and prioritized Events and Tasks panels adapt to mobile. Motion respects reduced-motion preferences.
-- Event totals and upcoming events use live data in the current workspace. Other planning figures are labeled samples in local development. The separate design preview is development-only.
+- Event totals, upcoming events, pending task totals, and tasks requiring attention use live data in the current workspace. Remaining sample figures are labeled in local development. The separate design preview is development-only.
 - Follow-up fixes close the mobile menu on Escape and restore toggle focus. A team access rejection clears cached details and closes the editor, while a temporary team failure preserves the draft.
 
 ## Wedding onboarding milestone — 2026-10-29
@@ -161,16 +166,16 @@ Use the complete rules in AGENTS.md and the design documents. Particularly:
 
 ## Verification and local development
 
-Latest application verification was on **2026-11-10**. See [dashboard browser QA](MANUAL_QA_2026-11-10.md), [earlier demo QA](DEPLOYMENT_QA_2026-11-05.md), and [local membership QA](MANUAL_QA_2026-11-02.md).
+Latest application verification was on **2026-11-11**. See [local Tasks and Events QA](MANUAL_QA_LOCAL_2026-11-11.md), [Events rollout QA](MANUAL_QA_EVENTS_2026-11-10.md), and [dashboard browser QA](MANUAL_QA_2026-11-10.md).
 
 | Check | Result and scope |
 | --- | --- |
 | `npm run lint` | Passed |
 | `npm run typecheck` | Passed |
-| `npm run test` | 125 tests passed (50 API and 75 web). Four opt-in tests were skipped in this run. Earlier development Atlas coverage passed for Events permissions, scheduling, and default album rollback |
-| Production build | Contracts, API, and the Webpack frontend build passed. The signup props type error was fixed. The default Turbopack build previously failed in the Windows CSS worker |
+| Automated tests | 130 offline tests and 3 development Atlas tests passed. Two other opt-in tests were outside that run |
+| Production build | Contracts, API, and the Webpack frontend build passed locally. The default Turbopack build previously failed in the Windows CSS worker |
 | `npm run format:check` | Passed |
-| Browser checks | The user confirmed local event creation. Event editing, cancellation, and archiving still need browser checks. Earlier dashboard QA covered responsive layout, wedding switching, wedding detail edits, Family & Team navigation, cross-tab sign-out, and simulated access and network failures |
+| Browser checks | Local QA passed task lifecycle and checklist persistence, Events scheduling and archiving, wedding switching, and mobile navigation at 390 px. QA-03 permission validation and QA-06 event timezone grouping passed revalidation. Live invitation delivery and acceptance were outside this pass |
 
 Manual QA reuses the dedicated accounts and retained synthetic weddings. Custom-domain authentication was retested on the deployed demo, while the updated dashboard was verified locally. Remote CI and the exact deployed dashboard revision still need checking. Deployed new-recipient acceptance, the broader Organizer scenarios, and 30-day Remember Me persistence remain open QA items.
 
@@ -178,10 +183,10 @@ From the repository root, run `npm run dev`. Web: `http://localhost:3000`; API: 
 
 ## Known limitations and follow-ups
 
-- QA-03 (low): after submitting an Organizer invitation with no selected permissions, switching to Wedding Admin leaves the obsolete permission warning visible. Admin sending was not tested in that state; see MANUAL_QA_2026-11-02.md. This status update does not fix the issue.
+- Two Events concurrency findings remain open. Saving a timezone change can overwrite a newer start or end time. Saving an organizer checkbox change can replace another planner’s assignment.
 - Event cover uploads, YouTube livestreams, guest invitations and notifications, and published event updates remain follow-ups under their respective modules.
 - Auth responses and API errors now include the designed success/error envelope and request ID. Health retains its existing `{ status: "ok" }` liveness payload.
-- Confirm the Vercel build and smoke-test the Events rollout. Local Webpack verification passed.
+- Confirm the matching Vercel deployments and smoke-test Events and Tasks. The 10 November public check still showed the earlier overview.
 - The ceremony preview depends on an external Stitch image URL. Review asset availability and hosting before production release.
 - Legal/contact pages and links were not invented to populate the footer. Add them when their content and scope are approved.
 - No deployment, real email send, media upload, live vendor search, or payment operation was performed during homepage development.
@@ -196,14 +201,15 @@ From the repository root, run `npm run dev`. Web: `http://localhost:3000`; API: 
 | Project status handoff | Created on 2026-10-08 |
 | Signup/login/session/logout | Implemented; Atlas lifecycle and 2026-10-29 manual browser flows checked |
 | Initial wedding setup and workspace access | Implemented 2026-10-29; Family & Team added 2026-10-30 |
-| Family & Team membership milestone | Implemented 2026-10-30; recipient guidance/email matching and an accepted membership verified locally on 2026-11-02; QA-03 remains |
+| Family & Team membership milestone | Implemented 2026-10-30; recipient guidance/email matching and an accepted membership verified locally on 2026-11-02; QA-03 fixed and rechecked locally on 2026-11-11 |
 | Invitation account guidance and email prefill | Implemented 2026-11-02; existing-recipient switching/login/prefill checked; new-recipient signup flow needs browser QA |
 | Signed-in navbar identity | Implemented 2026-11-02; desktop name/email, compact mobile name and My Account link; local QA checked identity/logout |
 | Wedding title suggestions and duplicate protection | Implemented; unit, browser and scoped Atlas duplicate/concurrency coverage passed |
 | Manual QA and logout regression fixes | QA-01/QA-02 fixed and independently rechecked 2026-10-29; reusable account and two synthetic weddings retained |
 | Public Vercel demo | Live on the custom domain; demo authentication verified on 10 November |
 | Wedding dashboard | Accepted locally on 10 November. Live Events data is connected. Remaining planning integrations and deployed revision verification are pending |
-| Wedding Events | Core flow implemented locally on 10 November. User confirmed creation. Remaining browser QA and public demo rollout are pending |
+| Wedding Events | Core flow implemented locally on 10 November. Local browser QA and QA-06 revalidation passed. Two concurrent-edit findings and public rollout remain open |
+| Task Planner | Core flow implemented locally on 11 November. Local browser and development Atlas checks passed. Public rollout and remaining FR-05 capabilities are pending |
 
 After each milestone, update the date and repository reference, revise the PRD status rows, record checks actually run, add any unresolved decisions, and adjust the next milestone. Mark a PRD feature complete only when its real behavior and authorization are implemented and verified; UI previews and scaffold files are insufficient.
 
@@ -214,5 +220,5 @@ After each milestone, update the date and repository reference, revise the PRD s
 - Invitation-linked login/signup prefill the email from a fresh validated server preview. The field remains editable, but the API still enforces the invited email. Signup requires a separate login; the invitation continuation survives both steps. Normal login stays blank; unavailable invitations do not prevent manual login.
 - Admins can revoke pending invitations or remove joined members through Members → Manage access → Remove member. Removal preserves the app account/history and permits reinvitation/reactivation. Accepted history alone does not block a new invitation. The last Admin is protected.
 - Homepage/workspace navigation shows the signed-in name/email and initial avatar on desktop, with a compact name on mobile. It links to My Account. The auth/account header also resolves identity. Existing session signals/focus revalidate it and confirmed logout clears it.
-- Latest browser QA used the saved manual QA account and retained weddings. The recipient accepted outside the agent's browser; Admin-side verification showed the new Organizer, Accepted history, and persistent Events/Tasks access. QA-03 is the only reported finding in that pass; remaining limits are listed above.
+- The 2 November browser QA used the saved manual QA account and retained weddings. The recipient accepted outside the agent's browser; Admin-side verification showed the new Organizer, Accepted history, and persistent Events/Tasks access. That pass reported QA-03, which passed local revalidation on 11 November.
 - Current development servers were restarted after the successful production build. No commits, pushes or production deployment were made. The earlier Windows generated-cache build failure was resolved by clearing only the verified `.next` directory with dev stopped.
