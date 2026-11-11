@@ -10,7 +10,12 @@ import {
 import { WeddingForm } from '../src/components/weddings/wedding-form';
 import { WeddingShell } from '../src/components/weddings/wedding-shell';
 import { WeddingSummary } from '../src/components/weddings/wedding-summary';
-vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+import { WeddingDashboard } from '../src/components/weddings/wedding-dashboard';
+import DashboardPreviewPage from '../src/app/(dashboard)/weddings/dashboard-preview/page';
+vi.mock('next/navigation', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('next/navigation')>()),
+  useRouter: () => ({ replace: vi.fn() }),
+}));
 const wedding = {
   id: 'a'.repeat(24),
   role: 'WEDDING_ADMIN' as const,
@@ -23,6 +28,60 @@ const wedding = {
   slug: 'priya-rahul',
 };
 describe('wedding presentation', () => {
+  it('links to the create form even when the wedding has no events yet', () => {
+    const html = renderToStaticMarkup(
+      <WeddingDashboard wedding={wedding} team={null} events={[]} />,
+    );
+    expect(html).toContain(`href="/weddings/${wedding.id}/events?add=1"`);
+    expect(html).toContain('Add event');
+    const unavailable = renderToStaticMarkup(
+      <WeddingDashboard wedding={wedding} team={null} events="unavailable" />,
+    );
+    expect(unavailable).not.toContain('Add event');
+  });
+  it('shows real workspace actions without mixing in the preview data', () => {
+    const html = renderToStaticMarkup(
+      <WeddingDashboard wedding={wedding} editDetails={() => {}} team={<p>2 members</p>} />,
+    );
+    expect(html).toContain('Our wedding');
+    expect(html).toContain('2 members');
+    expect(html).toContain('Edit Wedding Details');
+    expect(html).toContain(`href="/weddings/${wedding.id}/family"`);
+    expect(html).toContain(`href="/weddings/${wedding.id}/events"`);
+    expect(html).not.toContain('Haldi Ceremony');
+    expect(html).toContain('Expense Snapshot');
+    expect(
+      renderToStaticMarkup(
+        <WeddingDashboard
+          wedding={{ ...wedding, role: 'ORGANIZER' }}
+          editDetails={() => {}}
+          team={null}
+        />,
+      ),
+    ).not.toContain('Edit Wedding Details');
+  });
+
+  it('renders the populated dashboard only in development', () => {
+    vi.stubEnv('NODE_ENV', 'production');
+    try {
+      expect(() => DashboardPreviewPage()).toThrow('NEXT_HTTP_ERROR_FALLBACK;404');
+      vi.stubEnv('NODE_ENV', 'development');
+      const html = renderToStaticMarkup(<DashboardPreviewPage />);
+      expect(html).toContain('All wedding data on this page is fictional');
+      expect(html).toContain('Haldi Ceremony');
+      expect(html).toContain('Guest Invitations &amp; RSVP');
+      expect(html).toContain('Expense Snapshot');
+      const workspace = renderToStaticMarkup(
+        <WeddingDashboard wedding={wedding} team={<p>2 members</p>} />,
+      );
+      expect(workspace).toContain('Sample planning data');
+      expect(workspace).toContain('Royal Reception');
+      expect(workspace).toContain('₹12,30,000');
+      expect(workspace).toContain('2 members');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
   it('offers personal titles using first names while preserving accents and non-Latin names', () => {
     expect(suggestWeddingTitles('  Priya  Patel ', ' Rahul\tSharma ')).toContain(
       'Priya & Rahul’s Wedding',

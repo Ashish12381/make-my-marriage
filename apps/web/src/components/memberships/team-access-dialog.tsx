@@ -40,6 +40,10 @@ export function TeamAccessDialog({
     () => member?.permissions ?? organizerPermissionsSchema.parse({}),
   );
   const [message, setMessage] = useState('');
+  const [permissionWarning, setPermissionWarning] = useState('');
+  const visibleMessage =
+    message ||
+    (role === 'ORGANIZER' && !Object.values(permissions).some(Boolean) ? permissionWarning : '');
   const [busy, setBusy] = useState(false);
   const [removing, setRemoving] = useState(false);
   const alert = useRef<HTMLDivElement>(null);
@@ -72,12 +76,17 @@ export function TeamAccessDialog({
       ? memberAccessSchema.safeParse(access)
       : createMembershipInviteSchema.safeParse({ ...access, email });
     if (!parsed.success) {
-      setMessage(parsed.error.issues[0]?.message ?? 'Check your entries.');
+      const issue = parsed.error.issues[0];
+      const permissionsInvalid =
+        issue?.path[0] === 'permissions' && !Object.values(permissions).some(Boolean);
+      setPermissionWarning(permissionsInvalid ? issue.message : '');
+      setMessage(permissionsInvalid ? '' : (issue?.message ?? 'Check your entries.'));
       requestAnimationFrame(() => alert.current?.focus());
       return;
     }
     setBusy(true);
     setMessage('');
+    setPermissionWarning('');
     try {
       if (member) {
         await changeMemberAccess(weddingId, member.id, memberAccessSchema.parse(access));
@@ -150,9 +159,9 @@ export function TeamAccessDialog({
               </button>
             </div>
           )}
-          {message && (
+          {visibleMessage && (
             <div className="wedding-alert" role="alert" ref={alert} tabIndex={-1}>
-              {message}
+              {visibleMessage}
             </div>
           )}
           {lastAdmin && (

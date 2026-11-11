@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import './weddings.css';
 @import './memberships.css';
+@import './events.css';
+@import './tasks.css';
 
 /* Auth screens follow the supplied Stitch auth cards; tokens stay scoped here. */
 .auth-shell {

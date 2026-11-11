@@ -1,0 +1,245 @@
+.event-workspace {
+  display: grid;
+  gap: 1.5rem;
+}
+.event-breadcrumbs,
+.event-actions,
+.event-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+.event-breadcrumbs {
+  color: var(--wedding-muted, #56423b);
+  font-size: 0.875rem;
+}
+.event-breadcrumbs a {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.event-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border-radius: 1.5rem;
+  background: linear-gradient(120deg, #fff1eb, #f8e1d5);
+}
+.event-eyebrow {
+  color: #8d391b;
+  font-weight: 700;
+}
+.event-hero h1 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-block: 0.3rem 0.55rem;
+  overflow-wrap: anywhere;
+}
+.event-metrics,
+.event-detail-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.event-metrics > div {
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+}
+.event-metrics strong {
+  font-size: clamp(1.25rem, 3vw, 2rem);
+}
+.event-list-tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+.event-filters button,
+.event-status {
+  border-radius: 999px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #fff1eb;
+  color: #793719;
+}
+.event-filters button {
+  cursor: pointer;
+}
+.event-filters button[aria-pressed='true'] {
+  color: #fff;
+  background: #983c1c;
+}
+.event-status[data-status='CANCELLED'] {
+  color: #8a2432;
+  background: #fce9eb;
+}
+.event-status[data-status='SCHEDULED'] {
+  color: #28513b;
+  background: #e6f1e8;
+}
+.event-status[data-status='COMPLETED'] {
+  color: #474544;
+  background: #f0eeec;
+}
+.event-list,
+.event-day {
+  display: grid;
+  gap: 0.75rem;
+}
+.event-day h2,
+.event-panel h2 {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+.event-list-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: inherit;
+  text-decoration: none;
+}
+.event-list-card:hover {
+  border-color: #be714f;
+}
+.event-list-card h3 {
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.event-list-card p {
+  color: #56423b;
+  overflow-wrap: anywhere;
+}
+.event-type-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: grid;
+  place-items: center;
+  border-radius: 0.8rem;
+  background: #fff1eb;
+  color: #943818;
+  font-size: 1.25rem;
+}
+.event-detail-grid {
+  grid-template-columns: 2fr 1fr;
+  align-items: start;
+}
+.event-panel {
+  display: grid;
+  gap: 0.65rem;
+  padding: 1.25rem;
+  overflow-wrap: anywhere;
+}
+.event-lifecycle {
+  grid-column: 1 / -1;
+}
+.event-description {
+  white-space: pre-wrap;
+}
+.event-dialog {
+  width: min(42rem, calc(100% - 1.5rem));
+  background: #fffdfc;
+}
+.event-form,
+.event-confirm {
+  display: grid;
+  gap: 0.9rem;
+}
+.event-dialog:not([open]) {
+  display: none;
+}
+.event-confirm,
+.event-form {
+  padding: 1.5rem;
+}
+.event-confirm h2,
+.event-form h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.event-confirm .event-actions,
+.event-form .event-actions {
+  justify-content: flex-end;
+}
+.event-form label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 700;
+  min-width: 0;
+}
+.event-form label small,
+.event-hint {
+  color: #56423b;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+.event-form input:not([type='checkbox']),
+.event-form select,
+.event-form textarea,
+.event-list-tools input {
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid #decac0;
+  background: #fffaf8;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.6rem;
+  color: #221a16;
+  font-weight: 500;
+}
+.event-form fieldset {
+  border: 1px solid #decac0;
+  padding: 0.75rem;
+  border-radius: 0.65rem;
+}
+.event-form legend {
+  padding-inline: 0.25rem;
+  font-weight: 700;
+}
+.event-form .event-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-block: 0.25rem;
+}
+.event-field-pair {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.event-danger {
+  background: #902536;
+}
+.event-danger:hover {
+  background: #702030;
+}
+
+@media (max-width: 640px) {
+  .event-detail-grid,
+  .event-field-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .event-metrics {
+    gap: 0.4rem;
+  }
+  .event-metrics > div {
+    padding: 0.55rem 0.4rem;
+    font-size: 0.75rem;
+  }
+  .event-list-tools input {
+    width: 100%;
+  }
+  .event-list-card {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .event-list-card > span:last-child {
+    display: none;
+  }
+}

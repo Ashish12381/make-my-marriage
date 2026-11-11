@@ -1,15 +1,19 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import type { TaskSummary, TeamMember, WeddingEvent } from '@make-my-marriage/contracts';
 import { getWedding } from '@/lib/api/weddings';
+import { getTeam } from '@/lib/api/team';
+import { classifyEventsLoadError, listEvents } from '@/lib/api/events';
+import { listTasks } from '@/lib/api/tasks';
 import { authErrorMessage } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/client';
 import { subscribeToSessionChanges } from '@/lib/auth/session-events';
 import { redirectAfterSessionLoss } from '@/lib/auth/logout';
-import { weddingCountdown } from '@/lib/weddings';
 import { initialWeddingOverview, weddingOverviewReducer } from '@/lib/wedding-overview-state';
 import { WeddingSummary } from './wedding-summary';
 import { WeddingForm } from './wedding-form';
+import { WeddingDashboard } from './wedding-dashboard';
 
 export function WeddingOverview({
   weddingId,
@@ -27,14 +31,71 @@ function WeddingOverviewContent({ weddingId, ready }: { weddingId: string; ready
     initialWeddingOverview,
   );
   const [attempt, setAttempt] = useState(0);
+  const [events, setEvents] = useState<WeddingEvent[] | 'restricted' | 'unavailable' | null>(null);
+  const [tasks, setTasks] = useState<TaskSummary | 'restricted' | 'unavailable' | null>(null);
   const modal = useRef<HTMLDialogElement>(null);
+  const weddingRequest = useRef<AbortController>(null);
+  const handleAccessRejection = useCallback((error: unknown) => {
+    if (!(error instanceof ApiError)) return false;
+    const { status } = error.response;
+    if (status !== 401 && status !== 403 && status !== 404) return false;
+
+    weddingRequest.current?.abort();
+    setEvents(null);
+    setTasks(null);
+    dispatch({
+      type: 'failed',
+      message:
+        status === 401
+          ? 'Your session has ended. Please sign in again.'
+          : 'This wedding is unavailable or you do not have access.',
+      accessRejected: true,
+    });
+    if (status === 401) redirectAfterSessionLoss();
+    return true;
+  }, []);
   function retry() {
     dispatch({ type: 'retry' });
     setAttempt((n) => n + 1);
   }
   useEffect(() => subscribeToSessionChanges(() => setAttempt((n) => n + 1)), []);
   useEffect(() => {
+    if (ready || !/^[a-f0-9]{24}$/i.test(weddingId)) return;
     const controller = new AbortController();
+    const { signal } = controller;
+    void listTasks(weddingId, 1, signal)
+      .then(({ summary }) => {
+        if (!signal.aborted && !weddingRequest.current?.signal.aborted) setTasks(summary);
+      })
+      .catch(async (error: unknown) => {
+        if (signal.aborted || weddingRequest.current?.signal.aborted) return;
+        const outcome = await classifyEventsLoadError(error);
+        if (signal.aborted || weddingRequest.current?.signal.aborted) return;
+        if (outcome === 'access-rejected') handleAccessRejection(error);
+        else setTasks(outcome);
+      });
+    return () => controller.abort();
+  }, [weddingId, ready, attempt, handleAccessRejection]);
+  useEffect(() => {
+    if (ready || !/^[a-f0-9]{24}$/i.test(weddingId)) return;
+    const controller = new AbortController();
+    void listEvents(weddingId, controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted && !weddingRequest.current?.signal.aborted)
+          setEvents(result);
+      })
+      .catch(async (error: unknown) => {
+        if (controller.signal.aborted || weddingRequest.current?.signal.aborted) return;
+        const outcome = await classifyEventsLoadError(error);
+        if (controller.signal.aborted || weddingRequest.current?.signal.aborted) return;
+        if (outcome === 'access-rejected') handleAccessRejection(error);
+        else setEvents(outcome);
+      });
+    return () => controller.abort();
+  }, [weddingId, ready, attempt, handleAccessRejection]);
+  useEffect(() => {
+    const controller = new AbortController();
+    weddingRequest.current = controller;
     if (!/^[a-fA-F0-9]{24}$/.test(weddingId)) {
       queueMicrotask(() => {
         if (!controller.signal.aborted) {
@@ -54,28 +115,17 @@ function WeddingOverviewContent({ weddingId, ready }: { weddingId: string; ready
         }
       })
       .catch(async (err: unknown) => {
-        if (controller.signal.aborted) return;
-        if (err instanceof ApiError && err.response.status === 401) {
-          dispatch({
-            type: 'failed',
-            message: 'Your session has ended. Please sign in again.',
-            accessRejected: true,
-          });
-          redirectAfterSessionLoss();
-          return;
-        }
-        const missing =
-          err instanceof ApiError && (err.response.status === 403 || err.response.status === 404);
+        if (controller.signal.aborted || handleAccessRejection(err)) return;
         const detail = await authErrorMessage(
           err,
           'We could not load this wedding. Please try again.',
         );
         if (!controller.signal.aborted) {
-          dispatch({ type: 'failed', message: detail.message, accessRejected: missing });
+          dispatch({ type: 'failed', message: detail.message, accessRejected: false });
         }
       });
     return () => controller.abort();
-  }, [weddingId, attempt]);
+  }, [weddingId, attempt, handleAccessRejection]);
   useEffect(() => {
     if (editing) modal.current?.showModal();
   }, [editing]);
@@ -146,50 +196,22 @@ function WeddingOverviewContent({ weddingId, ready }: { weddingId: string; ready
       </div>
     );
   return (
-    <div className="wedding-container">
+    <div className="wedding-dashboard-page">
       {!editing && refreshWarning}
-      <div className="wedding-breadcrumb">
-        <Link href="/weddings">← My Weddings / Switch wedding</Link>
-        <span className="wedding-badge">
-          {wedding.role === 'WEDDING_ADMIN' ? 'Wedding Admin' : 'Organizer'}
-        </span>
-      </div>
-      <section className="wedding-card wedding-overview-heading">
-        <div>
-          <p className="wedding-eyebrow">One wedding. Both families.</p>
-          <h1>{wedding.title}</h1>
-          <p>
-            {wedding.brideName} &amp; {wedding.groomName}
-          </p>
-        </div>
-        <div className="wedding-countdown">
-          <span aria-hidden="true">♡</span>
-          <strong>{weddingCountdown(wedding.weddingDate, wedding.timezone)}</strong>
-          {wedding.role === 'WEDDING_ADMIN' && (
-            <button className="wedding-button" onClick={() => dispatch({ type: 'edit' })}>
-              Edit Wedding Details
-            </button>
-          )}
-        </div>
-      </section>
-      <section className="wedding-card wedding-details">
-        <Link
-          href={`/weddings/${wedding.id}/family`}
-          className="wedding-button wedding-button-secondary"
-        >
-          Family &amp; Team →
-        </Link>
-        <h2>Your wedding details</h2>
-        <WeddingSummary wedding={wedding} />
-        <div className="wedding-reserved">
-          <div>
-            <h3>Reserved website address</h3>
-            <p className="wedding-url">/w/{wedding.slug}</p>
-            <p className="wedding-help">Your website has not been published.</p>
-          </div>
-          <span className="wedding-badge">Not published</span>
-        </div>
-      </section>
+      <WeddingDashboard
+        wedding={wedding}
+        events={events}
+        tasks={tasks}
+        editDetails={() => dispatch({ type: 'edit' })}
+        team={
+          <TeamSummary
+            weddingId={wedding.id}
+            attempt={attempt}
+            retry={retry}
+            handleAccessRejection={handleAccessRejection}
+          />
+        }
+      />
       {editing && (
         <dialog
           ref={modal}
@@ -213,5 +235,64 @@ function WeddingOverviewContent({ weddingId, ready }: { weddingId: string; ready
         </dialog>
       )}
     </div>
+  );
+}
+
+function TeamSummary({
+  weddingId,
+  attempt,
+  retry,
+  handleAccessRejection,
+}: {
+  weddingId: string;
+  attempt: number;
+  retry: () => void;
+  handleAccessRejection: (error: unknown) => boolean;
+}) {
+  const [members, setMembers] = useState<TeamMember[] | 'unavailable' | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    void getTeam(weddingId, controller.signal)
+      .then(({ members }) => {
+        if (!controller.signal.aborted) setMembers(members);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted || handleAccessRejection(error)) return;
+        setMembers('unavailable');
+      });
+    return () => controller.abort();
+  }, [weddingId, attempt, handleAccessRejection]);
+
+  if (members === 'unavailable') {
+    return (
+      <div role="status">
+        <p>Team summary unavailable.</p>
+        <button type="button" className="wedding-text-button" onClick={retry}>
+          Retry team summary
+        </button>
+      </div>
+    );
+  }
+  if (members === null) return <p role="status">Loading your team…</p>;
+  return (
+    <>
+      <p>
+        <strong>{members.length}</strong> {members.length === 1 ? 'member' : 'members'} on your
+        planning team
+      </p>
+      <ul className="wedding-dashboard-list wedding-dashboard-roster">
+        {members.slice(0, 4).map((member) => (
+          <li key={member.id}>
+            <span className="wedding-dashboard-avatar" aria-hidden="true">
+              {Array.from(member.displayName.trim())[0]?.toUpperCase() || '?'}
+            </span>
+            <div>
+              <strong>{member.displayName}</strong>
+              <p>{member.role === 'WEDDING_ADMIN' ? 'Wedding Admin' : 'Organizer'}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
